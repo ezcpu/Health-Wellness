@@ -49,7 +49,7 @@
 
   <div class="tabs">
     <button class="tab-button active" onclick="openTab('current')">Current Data</button>
-    <button class="tab-button" onclick="openTab('future')">Active Partners</button>
+    <button class="tab-button" onclick="openTab('active')">Active Partners</button>
   </div>
 
   <div id="current" class="tab-content active">
@@ -88,12 +88,11 @@
         </label>
         <span class="pill"><span id="selCount">All promotions</span></span>
       </div>
-      <div class="legend">When “All” is selected: bars by promotion totals. When “Monthly” is selected: lines by month.</div>
       <div id="promoChart"></div>
     </div>
   </div>
 
-  <div id="future" class="tab-content">
+  <div id="active" class="tab-content">
     <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&single=true"></iframe>
   </div>
 
@@ -147,7 +146,7 @@ function renderRegion(data) {
   const byRegion = groupBy(data, r => (r.Region || "Unknown").toUpperCase());
   const labels = ["CAN","US"];
   const values = labels.map(k => (byRegion.get(k) || []).length);
-  Plotly.newPlot('regionChart', [{x: labels, y: values, type:'bar'}], {margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups',title_standoff:20}}, {displayModeBar:false,responsive:true});
+  Plotly.newPlot('regionChart', [{x: labels, y: values, type:'bar'}], {margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups'}}, {displayModeBar:false,responsive:true});
 }
 
 function renderImpact(data) {
@@ -159,27 +158,34 @@ function renderImpact(data) {
   }
   const months = [...byMonth.keys()].sort();
   const vals = months.map(m => byMonth.get(m)||0);
-  Plotly.newPlot('impactChart', [{x:months,y:vals,type:'scatter',mode:'lines+markers'}], {margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups',title_standoff:20},xaxis:{title:'Month'}}, {displayModeBar:false,responsive:true});
+  Plotly.newPlot('impactChart', [{x:months,y:vals,type:'scatter',mode:'lines+markers'}], {margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups'},xaxis:{title:'Month'}}, {displayModeBar:false,responsive:true});
 }
 
 function renderPromoSection() {
   const promosSel = document.getElementById('promos');
   const mode = document.getElementById('promoView').value;
-  const vals = Array.from(promosSel.selectedOptions).map(o=>o.value);
-  const selected = vals.length?vals:[...new Set(RAW_DATA_ALL.map(r=>r["Promotion Name"]))];
-  const filtered = RAW_DATA_ALL.filter(r=>selected.includes(r["Promotion Name"]));
+  const promoSet = [...new Set(RAW_DATA_ALL.map(r => r["Promotion Name"]).filter(Boolean))].sort();
+  promosSel.innerHTML = '';
+  promoSet.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    promosSel.appendChild(opt);
+  });
+  const selected = Array.from(promosSel.selectedOptions).map(o => o.value);
+  const used = selected.length ? selected : promoSet;
+  const filtered = RAW_DATA_ALL.filter(r => used.includes(r["Promotion Name"]));
   if(mode==='all') {
     const counts=new Map();
     for(const r of filtered) counts.set(r["Promotion Name"],(counts.get(r["Promotion Name"])||0)+1);
     const promos=[...counts.keys()].sort((a,b)=>counts.get(b)-counts.get(a));
-    Plotly.newPlot('promoChart',[{x:promos,y:promos.map(p=>counts.get(p)||0),type:'bar'}],{margin:{t:20,l:50,r:10,b:100},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups',title_standoff:20},xaxis:{title:'Promotion',tickangle:-45}},{displayModeBar:false,responsive:true});
+    Plotly.newPlot('promoChart',[{x:promos,y:promos.map(p=>counts.get(p)||0),type:'bar'}],{margin:{t:20,l:50,r:10,b:100},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups'},xaxis:{title:'Promotion',tickangle:-45}},{displayModeBar:false,responsive:true});
   } else {
     const keyFn=r=>toMonthly(r["Created Date"]);
     const months=[...new Set(filtered.map(keyFn))].filter(x=>x!=="Unknown").sort();
     const byPromo=new Map();
     for(const r of filtered){const p=r["Promotion Name"];const t=keyFn(r);if(t==="Unknown")continue;if(!byPromo.has(p))byPromo.set(p,new Map());byPromo.get(p).set(t,(byPromo.get(p).get(t)||0)+1);}
     const traces=[];for(const [promo,series]of byPromo.entries())traces.push({x:months,y:months.map(t=>series.get(t)||0),type:'scatter',mode:'lines+markers',name:promo});
-    Plotly.newPlot('promoChart',traces,{margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups',title_standoff:20},xaxis:{title:'Month'},legend:{orientation:'h'}},{displayModeBar:false,responsive:true});
+    Plotly.newPlot('promoChart',traces,{margin:{t:20,l:50,r:10,b:40},paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',yaxis:{title:'Signups'},xaxis:{title:'Month'},legend:{orientation:'h'}},{displayModeBar:false,responsive:true});
   }
 }
 
