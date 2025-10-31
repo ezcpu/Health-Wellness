@@ -125,18 +125,22 @@ function normalizeKeys(record){
 }
 
 // --- KPIs ---
-function renderKPIs(data){
+function renderKPIs(data) {
   document.getElementById("kpiTotal").textContent = fmtNum(data.length);
-  document.getElementById("kpiBC").textContent = fmtNum(data.filter(r => (r["membership type"]||"").toUpperCase()==="BLACK CARD MEMBER").length);
-  document.getElementById("kpi10NR").textContent = fmtNum(data.filter(r => (r["membership type"]||"").toUpperCase()==="10NR").length);
+  document.getElementById("kpiBC").textContent = fmtNum(
+    data.filter(r => (r["membership type"] || "").toUpperCase().includes("BLACK CARD")).length
+  );
+  document.getElementById("kpi10NR").textContent = fmtNum(
+    data.filter(r => (r["membership type"] || "").toUpperCase().includes("10NR")).length
+  );
 
-  const corp15={US:0,CAN:0};
-  const corpfmbc={US:0,CAN:0};
-  data.forEach(r=>{
-    const promo=(r["promotion name"]||"").toUpperCase();
-    const region=(r["region"]||"").toUpperCase();
-    if(promo==="CORPFM15") corp15[region]=(corp15[region]||0)+1;
-    if(promo==="CORPFMBC") corpfmbc[region]=(corpfmbc[region]||0)+1;
+  const corp15 = { US: 0, CAN: 0 };
+  const corpfmbc = { US: 0, CAN: 0 };
+  data.forEach(r => {
+    const promo = (r["promotion name"] || "").trim().toUpperCase();
+    const region = (r["region"] || "").trim().toUpperCase();
+    if (promo.includes("CORPFM15")) corp15[region] = (corp15[region] || 0) + 1;
+    if (promo.includes("CORPFMBC")) corpfmbc[region] = (corpfmbc[region] || 0) + 1;
   });
   document.getElementById("kpiCORPFM15").textContent = `US: ${fmtNum(corp15.US)} | CAN: ${fmtNum(corp15.CAN)}`;
   document.getElementById("kpiCORPFMBC").textContent = `US: ${fmtNum(corpfmbc.US)} | CAN: ${fmtNum(corpfmbc.CAN)}`;
@@ -155,22 +159,30 @@ function renderRegion(data){
 }
 
 // --- Monthly Impact chart ---
-function renderImpact(data){
-  const monthly={};
-  data.forEach(r=>{
-    const m=toMonthly(r["created date"]);
-    if(m!=="Unknown")monthly[m]=(monthly[m]||0)+1;
+function renderImpact(data) {
+  const monthly = {};
+  data.forEach(r => {
+    let rawDate = (r["created date"] || "").trim();
+    // Some sheets export dates like "10/29/2025" or "2025-10-29"
+    const d = new Date(rawDate);
+    if (!isNaN(d)) {
+      const monthKey = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      monthly[monthKey] = (monthly[monthKey] || 0) + 1;
+    }
   });
-  const months=Object.keys(monthly).sort();
-  const vals=months.map(m=>monthly[m]);
-  const monthLabels=months.map(m=>{
-    const [y,mm]=m.split("-");
-    const d=new Date(y,parseInt(mm)-1);
-    return d.toLocaleString("default",{month:"short",year:"numeric"});
+  const months = Object.keys(monthly).sort();
+  const vals = months.map(m => monthly[m]);
+  const labels = months.map(m => {
+    const [y, mm] = m.split("-");
+    const d = new Date(y, parseInt(mm) - 1);
+    return d.toLocaleString("default", { month: "short", year: "numeric" });
   });
-  Plotly.newPlot("impactChart",
-    [{x:monthLabels,y:vals,type:"scatter",mode:"lines+markers"}],
-    {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"},xaxis:{title:"Month"}},{displayModeBar:false});
+  Plotly.newPlot(
+    "impactChart",
+    [{ x: labels, y: vals, type: "scatter", mode: "lines+markers" }],
+    { margin: { t: 20, l: 50, r: 10, b: 40 }, yaxis: { title: "Signups" }, xaxis: { title: "Month" } },
+    { displayModeBar: false }
+  );
 }
 
 // --- Promotion trends (optional basic version) ---
@@ -251,4 +263,5 @@ window.addEventListener("DOMContentLoaded",loadData);
 
 </body>
 </html>
+
 
