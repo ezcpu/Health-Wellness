@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Health Wellness Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
   :root {
@@ -44,58 +45,56 @@
 </style>
 </head>
 <body>
-  <h1>Health Wellness Dashboard</h1>
-  <div class="updated">Data last updated: <strong>2025-10-28</strong></div>
-
-  <div class="tabs">
-    <button class="tab-button active" onclick="openTab('current')">Current Data</button>
-    <button class="tab-button" onclick="openTab('active')">Active Partners</button>
-  </div>
-
-  <div id="current" class="tab-content active">
-    <div class="grid">
-      <div>
-        <div class="kpis">
-          <div class="kpi"><h3>Total Members</h3><div class="val" id="kpiTotal">0</div></div>
-          <div class="kpi"><h3>Total BLACK CARD MEMBER</h3><div class="val" id="kpiBC">0</div></div>
-          <div class="kpi"><h3>Total 10NR</h3><div class="val" id="kpi10NR">0</div></div>
-        </div>
-        <div class="kpis2">
-          <div class="kpi"><h3>CORPFM15</h3><div class="val" id="kpiCORPFM15">US: 0 | CAN: 0</div></div>
-          <div class="kpi"><h3>CORPFMBC</h3><div class="val" id="kpiCORPFMBC">US: 0 | CAN: 0</div></div>
-        </div>
-        <div class="card">
-          <div class="legend">Region Breakdown (CAN vs US)</div>
-          <div id="regionChart"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="legend">Monthly Impact — total signups per month (all promotions, both regions)</div>
-        <div id="impactChart"></div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:18px;">
-      <div class="section-title">Promotions — Signups Over Time</div>
-      <div class="toolbar">
-        <label class="pill">Promotion Name (multi-select)
-          <select id="promos" class="multi" multiple size="6"></select>
-        </label>
-        <label class="pill">View
+<h1>Health Wellness Dashboard</h1>
+<div class="updated">Data last updated: <strong>2025-10-28</strong></div>
+<div class="tabs">
+<button class="tab-button active" onclick="openTab('current')">Current Data</button>
+<button class="tab-button" onclick="openTab('active')">Active Partners</button><button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
+</div>
+<div class="tab-content active" id="current">
+<div class="grid">
+<div>
+<div class="kpis">
+<div class="kpi"><h3>Total Members</h3><div class="val" id="kpiTotal">0</div></div>
+<div class="kpi"><h3>Total BLACK CARD MEMBER</h3><div class="val" id="kpiBC">0</div></div>
+<div class="kpi"><h3>Total 10NR</h3><div class="val" id="kpi10NR">0</div></div>
+</div>
+<div class="kpis2">
+<div class="kpi"><h3>CORPFM15</h3><div class="val" id="kpiCORPFM15">US: 0 | CAN: 0</div></div>
+<div class="kpi"><h3>CORPFMBC</h3><div class="val" id="kpiCORPFMBC">US: 0 | CAN: 0</div></div>
+</div>
+<div class="card">
+<div class="legend">Region Breakdown (CAN vs US)</div>
+<div id="regionChart"></div>
+</div>
+</div>
+<div class="card">
+<div class="legend">Monthly Impact — total signups per month (all promotions, both regions)</div>
+<div id="impactChart"></div>
+</div>
+</div>
+<div class="card" style="margin-top:18px;">
+<div class="section-title">Promotions — Signups Over Time</div>
+<div class="toolbar">
+<label class="pill">Promotion Name (multi-select)
+          <select class="multi" id="promos" multiple="" size="6"></select>
+</label>
+<label class="pill">View
           <select id="promoView">
-            <option value="all" selected>All</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        </label>
-        <span class="pill"><span id="selCount">All promotions</span></span>
-      </div>
-      <div id="promoChart"></div>
-    </div>
-  </div>
-
-  <div id="active" class="tab-content">
-    <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&single=true"></iframe>
-  </div>
-
+<option selected="" value="all">All</option>
+<option value="monthly">Monthly</option>
+</select>
+</label>
+<span class="pill"><span id="selCount">All promotions</span></span>
+</div>
+<div id="promoChart"></div>
+</div>
+</div>
+<div class="tab-content" id="active">
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&amp;single=true"></iframe>
+</div><div class="tab-content" id="pending">
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=279243253&amp;single=true"></iframe>
+</div>
 <script>
 function openTab(tabName) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
