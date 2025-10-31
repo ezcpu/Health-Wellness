@@ -45,6 +45,7 @@
 </head>
 <body>
 <h1>Health Wellness Dashboard</h1>
+<div id="loadStatus" style="color:#51607a; font-size:14px; margin-bottom:10px;">Loading data...</div>  
 <div class="updated">Data automatically loaded from Google Sheets</div>
 
 <div class="tabs">
@@ -104,125 +105,150 @@
 
 <script>
 function openTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(tabName).classList.add('active');
-  document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add('active');
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+  document.getElementById(tabName).classList.add("active");
+  document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add("active");
 }
 
-function fmtNum(n) { return Number(n || 0).toLocaleString(); }
+function fmtNum(n){return Number(n||0).toLocaleString();}
+function toMonthly(s){const d=new Date(s+"T00:00:00");if(isNaN(d))return"Unknown";return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 
-function toMonthly(dateStr) {
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d)) return "Unknown";
-  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0');
+// --- Normalize keys so capitalization differences don't break things ---
+function normalizeKeys(record){
+  const fixed={};
+  for(const k in record){
+    if(!record.hasOwnProperty(k))continue;
+    fixed[k.trim().toLowerCase()] = record[k];
+  }
+  return fixed;
 }
 
-// --- Dashboard rendering functions ---
-function renderKPIs(data) {
+// --- KPIs ---
+function renderKPIs(data){
   document.getElementById("kpiTotal").textContent = fmtNum(data.length);
-  document.getElementById("kpiBC").textContent = fmtNum(data.filter(r => (r["Membership Type"]||"").toUpperCase() === "BLACK CARD MEMBER").length);
-  document.getElementById("kpi10NR").textContent = fmtNum(data.filter(r => (r["Membership Type"]||"").toUpperCase() === "10NR").length);
-  const corp15 = { US: 0, CAN: 0 };
-  const corpfmbc = { US: 0, CAN: 0 };
-  data.forEach(r => {
-    if (r["Promotion Name"] === "CORPFM15") corp15[(r.Region||"").toUpperCase()]++;
-    if (r["Promotion Name"] === "CORPFMBC") corpfmbc[(r.Region||"").toUpperCase()]++;
+  document.getElementById("kpiBC").textContent = fmtNum(data.filter(r => (r["membership type"]||"").toUpperCase()==="BLACK CARD MEMBER").length);
+  document.getElementById("kpi10NR").textContent = fmtNum(data.filter(r => (r["membership type"]||"").toUpperCase()==="10NR").length);
+
+  const corp15={US:0,CAN:0};
+  const corpfmbc={US:0,CAN:0};
+  data.forEach(r=>{
+    const promo=(r["promotion name"]||"").toUpperCase();
+    const region=(r["region"]||"").toUpperCase();
+    if(promo==="CORPFM15") corp15[region]=(corp15[region]||0)+1;
+    if(promo==="CORPFMBC") corpfmbc[region]=(corpfmbc[region]||0)+1;
   });
   document.getElementById("kpiCORPFM15").textContent = `US: ${fmtNum(corp15.US)} | CAN: ${fmtNum(corp15.CAN)}`;
   document.getElementById("kpiCORPFMBC").textContent = `US: ${fmtNum(corpfmbc.US)} | CAN: ${fmtNum(corpfmbc.CAN)}`;
 }
 
-function renderRegion(data) {
-  const byRegion = { US: 0, CAN: 0 };
-  data.forEach(r => { const reg = (r.Region||"").toUpperCase(); if (reg in byRegion) byRegion[reg]++; });
-  Plotly.newPlot("regionChart", [{x:Object.keys(byRegion),y:Object.values(byRegion),type:"bar"}],
-    {margin:{t:20,l:40,r:20,b:40},yaxis:{title:"Signups"}},{displayModeBar:false});
+// --- Region breakdown ---
+function renderRegion(data){
+  const count={US:0,CAN:0};
+  data.forEach(r=>{
+    const reg=(r["region"]||"").toUpperCase();
+    if(count[reg]!=null)count[reg]++;
+  });
+  Plotly.newPlot("regionChart",
+    [{x:Object.keys(count),y:Object.values(count),type:"bar"}],
+    {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"}},{displayModeBar:false});
 }
 
-function renderImpact(data) {
-  const monthly = {};
-  data.forEach(r => {
-    const m = toMonthly(r["Created Date"]);
-    if (m !== "Unknown") monthly[m] = (monthly[m]||0) + 1;
+// --- Monthly Impact chart ---
+function renderImpact(data){
+  const monthly={};
+  data.forEach(r=>{
+    const m=toMonthly(r["created date"]);
+    if(m!=="Unknown")monthly[m]=(monthly[m]||0)+1;
   });
-  const months = Object.keys(monthly).sort();
-  const vals = months.map(m => monthly[m]);
-  const monthLabels = months.map(m => {
-    const [y, mm] = m.split("-");
-    const d = new Date(y, parseInt(mm)-1);
-    return d.toLocaleString("default", { month: "short", year: "numeric" });
+  const months=Object.keys(monthly).sort();
+  const vals=months.map(m=>monthly[m]);
+  const monthLabels=months.map(m=>{
+    const [y,mm]=m.split("-");
+    const d=new Date(y,parseInt(mm)-1);
+    return d.toLocaleString("default",{month:"short",year:"numeric"});
   });
-  Plotly.newPlot("impactChart", [{x:monthLabels, y:vals, type:"scatter", mode:"lines+markers"}],
+  Plotly.newPlot("impactChart",
+    [{x:monthLabels,y:vals,type:"scatter",mode:"lines+markers"}],
     {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"},xaxis:{title:"Month"}},{displayModeBar:false});
 }
 
-function renderPromoSection(data) {
-  const promos = [...new Set(data.map(r => r["Promotion Name"]).filter(Boolean))].sort();
-  const sel = document.getElementById("promos");
-  sel.innerHTML = "";
-  promos.forEach(p => { const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
+// --- Promotion trends (optional basic version) ---
+function renderPromoSection(data){
+  const promos=[...new Set(data.map(r=>r["promotion name"]).filter(Boolean))].sort();
+  const sel=document.getElementById("promos");
+  sel.innerHTML="";
+  promos.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o);});
   drawPromos();
 
-  function drawPromos() {
-    const mode = document.getElementById("promoView").value;
-    const selected = Array.from(sel.selectedOptions).map(o=>o.value);
-    const used = selected.length ? selected : promos;
-    const filtered = data.filter(r => used.includes(r["Promotion Name"]));
-    if (mode === "all") {
-      const counts = {};
-      filtered.forEach(r => counts[r["Promotion Name"]] = (counts[r["Promotion Name"]]||0)+1);
-      const labels = Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
-      Plotly.newPlot("promoChart", [{x:labels,y:labels.map(l=>counts[l]),type:"bar"}],
+  function drawPromos(){
+    const mode=document.getElementById("promoView").value;
+    const selected=Array.from(sel.selectedOptions).map(o=>o.value);
+    const used=selected.length?selected:promos;
+    const filtered=data.filter(r=>used.includes(r["promotion name"]));
+
+    if(mode==="all"){
+      const counts={};
+      filtered.forEach(r=>counts[r["promotion name"]]=(counts[r["promotion name"]]||0)+1);
+      const labels=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
+      Plotly.newPlot("promoChart",
+        [{x:labels,y:labels.map(l=>counts[l]),type:"bar"}],
         {margin:{t:20,l:50,r:10,b:100},xaxis:{tickangle:-45},yaxis:{title:"Signups"}},{displayModeBar:false});
     } else {
-      const months = [...new Set(filtered.map(r => toMonthly(r["Created Date"])))].filter(x=>x!=="Unknown").sort();
-      const traces = [];
-      promos.forEach(promo => {
-        const series = months.map(m => filtered.filter(r => r["Promotion Name"]===promo && toMonthly(r["Created Date"])===m).length);
-        if (series.some(v => v>0)) {
-          const labels = months.map(m => {
-            const [y, mm] = m.split("-");
-            const d = new Date(y, parseInt(mm)-1);
-            return d.toLocaleString("default", { month: "short", year: "numeric" });
+      const months=[...new Set(filtered.map(r=>toMonthly(r["created date"])))].filter(x=>x!=="Unknown").sort();
+      const traces=[];
+      promos.forEach(promo=>{
+        const series=months.map(m=>filtered.filter(r=>r["promotion name"]===promo && toMonthly(r["created date"])===m).length);
+        if(series.some(v=>v>0)){
+          const labels=months.map(m=>{
+            const [y,mm]=m.split("-");
+            const d=new Date(y,parseInt(mm)-1);
+            return d.toLocaleString("default",{month:"short",year:"numeric"});
           });
-          traces.push({x:labels, y:series, name:promo, type:"scatter", mode:"lines+markers"});
+          traces.push({x:labels,y:series,name:promo,type:"scatter",mode:"lines+markers"});
         }
       });
-      Plotly.newPlot("promoChart", traces,
+      Plotly.newPlot("promoChart",traces,
         {margin:{t:20,l:50,r:10,b:40},legend:{orientation:"h"},yaxis:{title:"Signups"},xaxis:{title:"Month"}},
         {displayModeBar:false});
     }
   }
-  document.getElementById("promoView").onchange = drawPromos;
-  sel.onchange = drawPromos;
+  document.getElementById("promoView").onchange=drawPromos;
+  sel.onchange=drawPromos;
 }
 
 // --- Auto-fetch data from Google Sheets on load ---
-let RAW_DATA_ALL = [];
-
-async function loadData() {
-  try {
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv";
-    const res = await fetch(sheetUrl);
-    const text = await res.text();
-    const rows = text.trim().split("\n").map(r => r.split(","));
-    const headers = rows[0];
-    RAW_DATA_ALL = rows.slice(1).map(r => {
-      const obj = {};
-      headers.forEach((h, i) => obj[h.trim()] = r[i]);
-      return obj;
+async function loadData(){
+  const status=document.getElementById("loadStatus");
+  try{
+    const sheetUrl="https://corsproxy.io/?"+
+      encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv");
+    const res=await fetch(sheetUrl);
+    const text=await res.text();
+    const rows=text.trim().split("\n").map(r=>r.split(","));
+    const headers=rows[0];
+    const data=rows.slice(1).map(r=>{
+      const o={};headers.forEach((h,i)=>o[h.trim()]=r[i]);
+      return normalizeKeys(o);
     });
-    renderKPIs(RAW_DATA_ALL);
-    renderRegion(RAW_DATA_ALL);
-    renderImpact(RAW_DATA_ALL);
-    renderPromoSection(RAW_DATA_ALL);
-  } catch (err) {
-    console.error("Error loading Google Sheet data:", err);
+
+    renderKPIs(data);
+    renderRegion(data);
+    renderImpact(data);
+    renderPromoSection(data);
+
+    status.textContent="✅ Data loaded successfully!";
+    status.style.color="green";
+  }catch(err){
+    console.error("Error loading data:",err);
+    status.textContent="⚠️ Failed to load data. Check your connection or Google Sheet permissions.";
+    status.style.color="red";
   }
 }
 
-window.addEventListener("DOMContentLoaded", loadData);
+window.addEventListener("DOMContentLoaded",loadData);
 </script>
+
 </body>
 </html>
+
