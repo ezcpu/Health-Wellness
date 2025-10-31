@@ -138,6 +138,7 @@
 </div>
 
 <script>
+// ----- Tabs & Theme Toggle -----
 function openTab(tabName){
   document.querySelectorAll(".tab-content").forEach(el=>el.classList.remove("active"));
   document.querySelectorAll(".tab-button").forEach(btn=>btn.classList.remove("active"));
@@ -147,13 +148,15 @@ function openTab(tabName){
 
 document.getElementById("themeToggle").addEventListener("click",()=>{
   document.body.classList.toggle("dark");
-  document.getElementById("themeToggle").textContent=document.body.classList.contains("dark")?"☀️ Light Mode":"🌙 Dark Mode";
+  const isDark = document.body.classList.contains("dark");
+  document.getElementById("themeToggle").textContent=isDark?"☀️ Light Mode":"🌙 Dark Mode";
+  updateChartThemes(isDark);
 });
 
+// ----- Utility -----
 function fmtNum(n){return Number(n||0).toLocaleString();}
 function normalizeKeys(rec){const f={};for(const k in rec){f[k.trim().toLowerCase()]=rec[k];}return f;}
 function toMonthly(s){const d=new Date(s+"T00:00:00");if(isNaN(d))return"Unknown";return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
-
 function filterByMonth(data,selectedMonth="all"){
   if(selectedMonth==="all")return data;
   return data.filter(r=>{
@@ -164,6 +167,7 @@ function filterByMonth(data,selectedMonth="all"){
   });
 }
 
+// ----- KPI + Charts -----
 function renderKPIs(data){
   document.getElementById("kpiTotal").textContent=fmtNum(data.length);
   document.getElementById("kpiBC").textContent=fmtNum(data.filter(r=>(r["membership type"]||"").toUpperCase().includes("BLACK CARD")).length);
@@ -182,8 +186,8 @@ function renderRegion(data){
   const c={US:0,CAN:0};
   data.forEach(r=>{const reg=(r["region"]||"").toUpperCase();if(c[reg]!=null)c[reg]++;});
   Plotly.newPlot("regionChart",
-    [{x:Object.keys(c),y:Object.values(c),type:"bar",marker:{color:"#2a70ff"}}],
-    {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"}},{displayModeBar:false});
+    [{x:Object.keys(c),y:Object.values(c),type:"bar",marker:{color:getBarColor()}}],
+    getChartLayout("Signups","Region"),{displayModeBar:false});
 }
 
 function renderImpact(data){
@@ -203,9 +207,8 @@ function renderImpact(data){
     return d.toLocaleString("default",{month:"short",year:"numeric"});
   });
   Plotly.newPlot("impactChart",
-    [{x:labels,y:vals,type:"bar",marker:{color:"#2a70ff"}}],
-    {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"},xaxis:{title:"Month"}},
-    {displayModeBar:false});
+    [{x:labels,y:vals,type:"bar",marker:{color:getBarColor()}}],
+    getChartLayout("Signups","Month"),{displayModeBar:false});
 }
 
 function renderPromoSection(data){
@@ -214,6 +217,7 @@ function renderPromoSection(data){
   sel.innerHTML="";
   promos.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o);});
   if(promos.length>0){Array.from(sel.options).forEach(o=>o.selected=true);}
+  sel.size = Math.min(promos.length,8); // easier scrolling
   drawPromos();
 
   function drawPromos(){
@@ -235,13 +239,35 @@ function renderPromoSection(data){
       }
     });
     Plotly.newPlot("promoChart",traces,
-      {barmode:"group",margin:{t:20,l:50,r:10,b:40},legend:{orientation:"h"},yaxis:{title:"Signups"},xaxis:{title:"Month"}},
+      {...getChartLayout("Signups","Month"),barmode:"group"},
       {displayModeBar:false});
   }
   document.getElementById("promoView").onchange=drawPromos;
   sel.onchange=drawPromos;
 }
 
+// ----- Helpers for chart theming -----
+function getBarColor(){
+  return document.body.classList.contains("dark") ? "#60a5fa" : "#2a70ff";
+}
+function getChartLayout(yTitle,xTitle){
+  const dark=document.body.classList.contains("dark");
+  return {
+    margin:{t:20,l:50,r:10,b:40},
+    yaxis:{title:yTitle,color:dark?"#f1f5f9":"#0f172a"},
+    xaxis:{title:xTitle,color:dark?"#f1f5f9":"#0f172a"},
+    paper_bgcolor:dark?"#0f172a":"#ffffff",
+    plot_bgcolor:dark?"#0f172a":"#ffffff",
+    font:{color:dark?"#f1f5f9":"#0f172a"}
+  };
+}
+function updateChartThemes(isDark){
+  // re-render all charts with dark/light styles
+  const evt = new Event("change");
+  document.getElementById("monthSelect").dispatchEvent(evt);
+}
+
+// ----- Data Loading -----
 async function loadData(){
   const status=document.getElementById("loadStatus");
   try{
@@ -283,4 +309,5 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
