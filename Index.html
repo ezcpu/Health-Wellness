@@ -8,16 +8,29 @@
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
   :root {
-    --bg:#fff; --text:#0f172a; --muted:#51607a;
-    --card:#fff; --border:#e5eaf1; --ring:#2a70ff33;
+    --bg: #ffffff;
+    --text: #0f172a;
+    --muted: #51607a;
+    --card: #ffffff;
+    --border: #e5eaf1;
+    --ring: #2a70ff33;
   }
-  *{box-sizing:border-box;}
+  body.dark {
+    --bg: #0f172a;
+    --text: #f1f5f9;
+    --muted: #a3b0c3;
+    --card: #1e293b;
+    --border: #334155;
+    --ring: #60a5fa33;
+  }
+  *{box-sizing:border-box;transition:background-color 0.3s,color 0.3s,border-color 0.3s;}
   body{margin:0;padding:28px;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
   h1{font-size:28px;margin:0;font-weight:700;}
   .updated{color:var(--muted);font-size:13px;margin-top:4px;margin-bottom:18px;}
-  .tabs{display:flex;gap:10px;margin-bottom:20px;}
-  .tab-button{padding:8px 14px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;transition:background .2s;}
+  .tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .tab-button{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;transition:all .2s;}
   .tab-button:hover{background:#eef2ff;}
+  body.dark .tab-button:hover{background:#1e293b;}
   .tab-button.active{background:#2a70ff;color:#fff;border-color:#2a70ff;}
   .tab-content{display:none;}
   .tab-content.active{display:block;}
@@ -30,26 +43,34 @@
   .kpi .val{margin-top:6px;font-size:22px;font-weight:700;}
   .legend{font-size:13px;color:var(--muted);margin-bottom:10px;}
   .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 14px;}
-  select,.multi{background:#fff;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:140px;}
+  select,.multi{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:140px;}
   select:focus{outline:none;box-shadow:0 0 0 6px var(--ring);}
   .multi{min-width:260px;max-width:420px;}
-  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#f6f8fb;border:1px solid var(--border);color:var(--muted);font-size:12px;}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:12px;}
   .section-title{font-size:16px;font-weight:700;margin:8px 0 8px;}
   iframe{width:100%;height:80vh;border:none;}
+  .changelog{line-height:1.6;font-size:14px;color:var(--text);}
+  .changelog h2{font-size:18px;margin-top:0;margin-bottom:8px;}
+  .theme-toggle{margin-left:auto;padding:6px 12px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;color:var(--text);}
   @media(max-width:1060px){.grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
-<h1>Health Wellness Dashboard</h1>
-<div id="loadStatus" style="color:#51607a;font-size:14px;margin-bottom:10px;">Loading data...</div>
+<h1 style="display:flex;align-items:center;justify-content:space-between;">
+  Health Wellness Dashboard
+  <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+</h1>
+<div id="loadStatus" style="color:var(--muted);font-size:14px;margin-bottom:10px;">Loading data...</div>
 <div class="updated">Data automatically loaded from Google Sheets</div>
 
 <div class="tabs">
   <button class="tab-button active" onclick="openTab('current')">Current Data</button>
   <button class="tab-button" onclick="openTab('active')">Active Partners</button>
   <button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
+  <button class="tab-button" onclick="openTab('changelog')">Changelog</button>
 </div>
 
+<!-- CURRENT DATA -->
 <div class="tab-content active" id="current">
   <div class="grid">
     <div>
@@ -67,14 +88,13 @@
         <div id="regionChart"></div>
       </div>
     </div>
+
     <div class="card">
-      <div class="legend">Monthly Impact — total signups per month (all promotions, both regions)</div>
+      <div class="legend">Monthly Impact — total signups per month</div>
       <div class="toolbar" style="justify-content:flex-end">
-        <label class="pill">Time Range
-          <select id="timeRange">
-            <option value="all" selected>All Time</option>
-            <option value="ytd">Year-to-Date</option>
-            <option value="month">Most Recent Month</option>
+        <label class="pill">Select Month
+          <select id="monthSelect">
+            <option value="all" selected>All Months</option>
           </select>
         </label>
       </div>
@@ -94,17 +114,27 @@
           <option value="monthly">Monthly</option>
         </select>
       </label>
-      <span class="pill"><span id="selCount">All promotions</span></span>
     </div>
     <div id="promoChart"></div>
   </div>
 </div>
 
+<!-- OTHER TABS -->
 <div class="tab-content" id="active">
   <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&single=true"></iframe>
 </div>
 <div class="tab-content" id="pending">
   <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=279243253&single=true"></iframe>
+</div>
+<div class="tab-content" id="changelog">
+  <div class="card changelog">
+    <h2>Changelog</h2>
+    <ul>
+      <li><strong>Nov 2025:</strong> Added Month selector + dark/light mode toggle 🌙</li>
+      <li><strong>Nov 2025:</strong> Switched Monthly Impact to bar chart for clarity.</li>
+      <li><strong>Nov 2025:</strong> Fixed Promotions chart auto-select.</li>
+    </ul>
+  </div>
 </div>
 
 <script>
@@ -114,18 +144,23 @@ function openTab(tabName){
   document.getElementById(tabName).classList.add("active");
   document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add("active");
 }
+
+document.getElementById("themeToggle").addEventListener("click",()=>{
+  document.body.classList.toggle("dark");
+  document.getElementById("themeToggle").textContent=document.body.classList.contains("dark")?"☀️ Light Mode":"🌙 Dark Mode";
+});
+
 function fmtNum(n){return Number(n||0).toLocaleString();}
 function normalizeKeys(rec){const f={};for(const k in rec){f[k.trim().toLowerCase()]=rec[k];}return f;}
 function toMonthly(s){const d=new Date(s+"T00:00:00");if(isNaN(d))return"Unknown";return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 
-function filterByRange(data,range="all"){
-  const now=new Date(),yr=now.getFullYear(),mo=now.getMonth();
+function filterByMonth(data,selectedMonth="all"){
+  if(selectedMonth==="all")return data;
   return data.filter(r=>{
     const d=new Date((r["created date"]||"").trim());
     if(isNaN(d))return false;
-    if(range==="ytd")return d.getFullYear()===yr;
-    if(range==="month")return d.getFullYear()===yr && d.getMonth()===mo;
-    return true;
+    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    return key===selectedMonth;
   });
 }
 
@@ -147,7 +182,7 @@ function renderRegion(data){
   const c={US:0,CAN:0};
   data.forEach(r=>{const reg=(r["region"]||"").toUpperCase();if(c[reg]!=null)c[reg]++;});
   Plotly.newPlot("regionChart",
-    [{x:Object.keys(c),y:Object.values(c),type:"bar"}],
+    [{x:Object.keys(c),y:Object.values(c),type:"bar",marker:{color:"#2a70ff"}}],
     {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"}},{displayModeBar:false});
 }
 
@@ -168,27 +203,73 @@ function renderImpact(data){
     return d.toLocaleString("default",{month:"short",year:"numeric"});
   });
   Plotly.newPlot("impactChart",
-    [{x:labels,y:vals,type:"scatter",mode:"lines+markers"}],
+    [{x:labels,y:vals,type:"bar",marker:{color:"#2a70ff"}}],
     {margin:{t:20,l:50,r:10,b:40},yaxis:{title:"Signups"},xaxis:{title:"Month"}},
     {displayModeBar:false});
+}
+
+function renderPromoSection(data){
+  const promos=[...new Set(data.map(r=>(r["promotion name"]||"").trim()).filter(x=>x!==""))].sort();
+  const sel=document.getElementById("promos");
+  sel.innerHTML="";
+  promos.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o);});
+  if(promos.length>0){Array.from(sel.options).forEach(o=>o.selected=true);}
+  drawPromos();
+
+  function drawPromos(){
+    const mode=document.getElementById("promoView").value;
+    const selected=Array.from(sel.selectedOptions).map(o=>o.value);
+    const used=selected.length?selected:promos;
+    const filtered=data.filter(r=>used.includes((r["promotion name"]||"").trim()));
+    const months=[...new Set(filtered.map(r=>toMonthly(r["created date"])))].filter(x=>x!=="Unknown").sort();
+    const traces=[];
+    used.forEach(promo=>{
+      const series=months.map(m=>filtered.filter(r=>(r["promotion name"]||"").trim()===promo && toMonthly(r["created date"])===m).length);
+      if(series.some(v=>v>0)){
+        const labels=months.map(m=>{
+          const [y,mm]=m.split("-");
+          const d=new Date(y,parseInt(mm)-1);
+          return d.toLocaleString("default",{month:"short",year:"numeric"});
+        });
+        traces.push({x:labels,y:series,name:promo,type:"bar"});
+      }
+    });
+    Plotly.newPlot("promoChart",traces,
+      {barmode:"group",margin:{t:20,l:50,r:10,b:40},legend:{orientation:"h"},yaxis:{title:"Signups"},xaxis:{title:"Month"}},
+      {displayModeBar:false});
+  }
+  document.getElementById("promoView").onchange=drawPromos;
+  sel.onchange=drawPromos;
 }
 
 async function loadData(){
   const status=document.getElementById("loadStatus");
   try{
     const sheetUrl="https://corsproxy.io/?"+encodeURIComponent("https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv");
-    const res=await fetch(sheetUrl);const text=await res.text();
-    const rows=text.trim().split("\n").map(r=>r.split(","));const headers=rows[0];
+    const res=await fetch(sheetUrl);
+    const text=await res.text();
+    const rows=text.trim().split("\n").map(r=>r.split(","));
+    const headers=rows[0];
     const data=rows.slice(1).map(r=>{const o={};headers.forEach((h,i)=>o[h.trim()]=r[i]);return normalizeKeys(o);});
 
-    renderKPIs(data);renderRegion(data);renderImpact(data);
-    const select=document.getElementById("timeRange");
-    select.addEventListener("change",e=>{
-      const range=e.target.value;
-      const filtered=filterByRange(data,range);
-      renderKPIs(filtered);
-      renderRegion(filtered);
-      renderImpact(filtered);
+    renderKPIs(data);renderRegion(data);renderImpact(data);renderPromoSection(data);
+
+    const monthSelect=document.getElementById("monthSelect");
+    const months=[...new Set(data.map(r=>{
+      const d=new Date((r["created date"]||"").trim());
+      if(isNaN(d))return null;
+      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    }).filter(Boolean))].sort();
+    months.forEach(m=>{
+      const [y,mm]=m.split("-");
+      const d=new Date(y,parseInt(mm)-1);
+      const opt=document.createElement("option");
+      opt.value=m;opt.textContent=d.toLocaleString("default",{month:"long",year:"numeric"});
+      monthSelect.appendChild(opt);
+    });
+    monthSelect.addEventListener("change",e=>{
+      const filtered=filterByMonth(data,e.target.value);
+      renderKPIs(filtered);renderRegion(filtered);renderImpact(filtered);
     });
 
     status.textContent="✅ Data loaded successfully!";status.style.color="green";
