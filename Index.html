@@ -211,60 +211,137 @@ function renderImpact(data){
     getChartLayout("Signups","Month"),{displayModeBar:false});
 }
 
-function renderPromoSection(data){
-  const promos=[...new Set(data.map(r=>(r["promotion name"]||"").trim()).filter(x=>x!==""))].sort();
-  const sel=document.getElementById("promos");
-  sel.innerHTML="";
-  promos.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o);});
-  if(promos.length>0){Array.from(sel.options).forEach(o=>o.selected=true);}
-  sel.size = Math.min(promos.length,8); // easier scrolling
+function renderPromoSection(data) {
+  const promos = [...new Set(
+    data.map(r => (r["promotion name"] || "").trim()).filter(x => x !== "")
+  )].sort();
+
+  const sel = document.getElementById("promos");
+  sel.innerHTML = "";
+  promos.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p;
+    o.textContent = p;
+    sel.appendChild(o);
+  });
+
+  // Auto-select all
+  if (promos.length > 0) Array.from(sel.options).forEach(o => o.selected = true);
+  sel.size = Math.min(promos.length, 10);
+
   drawPromos();
 
-  function drawPromos(){
-    const mode=document.getElementById("promoView").value;
-    const selected=Array.from(sel.selectedOptions).map(o=>o.value);
-    const used=selected.length?selected:promos;
-    const filtered=data.filter(r=>used.includes((r["promotion name"]||"").trim()));
-    const months=[...new Set(filtered.map(r=>toMonthly(r["created date"])))].filter(x=>x!=="Unknown").sort();
-    const traces=[];
-    used.forEach(promo=>{
-      const series=months.map(m=>filtered.filter(r=>(r["promotion name"]||"").trim()===promo && toMonthly(r["created date"])===m).length);
-      if(series.some(v=>v>0)){
-        const labels=months.map(m=>{
-          const [y,mm]=m.split("-");
-          const d=new Date(y,parseInt(mm)-1);
-          return d.toLocaleString("default",{month:"short",year:"numeric"});
+  function drawPromos() {
+    const mode = document.getElementById("promoView").value;
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    const used = selected.length ? selected : promos;
+    const filtered = data.filter(r => used.includes((r["promotion name"] || "").trim()));
+
+    // Parse month keys from created date (support slashes, dashes, timestamps)
+    const months = [...new Set(filtered.map(r => {
+      const raw = (r["created date"] || "").trim();
+      const d = new Date(raw);
+      if (isNaN(d)) return null;
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    }).filter(Boolean))].sort();
+
+    if (months.length === 0) {
+      document.getElementById("promoChart").innerHTML =
+        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signup data found for selected promotions.</p>";
+      return;
+    }
+
+    // Build grouped bars per promotion
+    const traces = [];
+    used.forEach(promo => {
+      const series = months.map(m => {
+        return filtered.filter(r => {
+          const raw = (r["created date"] || "").trim();
+          const d = new Date(raw);
+          if (isNaN(d)) return false;
+          const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+          return key === m && (r["promotion name"] || "").trim() === promo;
+        }).length;
+      });
+      if (series.some(v => v > 0)) {
+        const labels = months.map(m => {
+          const [y, mm] = m.split("-");
+          const d = new Date(y, parseInt(mm) - 1);
+          return d.toLocaleString("default", { month: "short", year: "numeric" });
         });
-        traces.push({x:labels,y:series,name:promo,type:"bar"});
+        traces.push({
+          x: labels,
+          y: series,
+          name: promo,
+          type: "bar",
+          marker: { color: getBarColor() }
+        });
       }
     });
-    Plotly.newPlot("promoChart",traces,
-      {...getChartLayout("Signups","Month"),barmode:"group"},
-      {displayModeBar:false});
+
+    if (traces.length === 0) {
+      document.getElementById("promoChart").innerHTML =
+        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signups for selected promotions.</p>";
+      return;
+    }
+
+    Plotly.newPlot(
+      "promoChart",
+      traces,
+      { ...getChartLayout("Signups", "Month"), barmode: "group", legend: { orientation: "h" } },
+      { displayModeBar: false }
+    );
   }
-  document.getElementById("promoView").onchange=drawPromos;
-  sel.onchange=drawPromos;
+
+  document.getElementById("promoView").onchange = drawPromos;
+  sel.onchange = drawPromos;
 }
 
+
 // ----- Helpers for chart theming -----
-function getBarColor(){
+function getBarColor() {
   return document.body.classList.contains("dark") ? "#60a5fa" : "#2a70ff";
 }
-function getChartLayout(yTitle,xTitle){
-  const dark=document.body.classList.contains("dark");
+
+function getChartLayout(yTitle, xTitle) {
+  const dark = document.body.classList.contains("dark");
   return {
-    margin:{t:20,l:50,r:10,b:40},
-    yaxis:{title:yTitle,color:dark?"#f1f5f9":"#0f172a"},
-    xaxis:{title:xTitle,color:dark?"#f1f5f9":"#0f172a"},
-    paper_bgcolor:dark?"#0f172a":"#ffffff",
-    plot_bgcolor:dark?"#0f172a":"#ffffff",
-    font:{color:dark?"#f1f5f9":"#0f172a"}
+    margin: { t: 20, l: 50, r: 10, b: 40 },
+    yaxis: {
+      title: yTitle,
+      color: dark ? "#f1f5f9" : "#0f172a",
+      gridcolor: dark ? "#334155" : "#e5eaf1",
+    },
+    xaxis: {
+      title: xTitle,
+      color: dark ? "#f1f5f9" : "#0f172a",
+      gridcolor: dark ? "#334155" : "#e5eaf1",
+    },
+    paper_bgcolor: dark ? "#0f172a" : "#ffffff",
+    plot_bgcolor: dark ? "#0f172a" : "#ffffff",
+    font: { color: dark ? "#f1f5f9" : "#0f172a" },
+    showlegend: true,
   };
 }
-function updateChartThemes(isDark){
-  // re-render all charts with dark/light styles
-  const evt = new Event("change");
-  document.getElementById("monthSelect").dispatchEvent(evt);
+
+function updateChartThemes(isDark) {
+  // Re-render all existing charts with new theme
+  const update = {
+    "paper_bgcolor": isDark ? "#0f172a" : "#ffffff",
+    "plot_bgcolor": isDark ? "#0f172a" : "#ffffff",
+    "font.color": isDark ? "#f1f5f9" : "#0f172a",
+    "xaxis.color": isDark ? "#f1f5f9" : "#0f172a",
+    "yaxis.color": isDark ? "#f1f5f9" : "#0f172a",
+    "xaxis.gridcolor": isDark ? "#334155" : "#e5eaf1",
+    "yaxis.gridcolor": isDark ? "#334155" : "#e5eaf1"
+  };
+
+  // Safely update all charts if they exist
+  ["regionChart", "impactChart", "promoChart"].forEach(id => {
+    if (document.getElementById(id)) {
+      Plotly.relayout(id, update);
+    }
+  });
 }
 
 // ----- Data Loading -----
@@ -309,5 +386,6 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
