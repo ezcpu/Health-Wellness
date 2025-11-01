@@ -212,8 +212,9 @@ function renderImpact(data){
 }
 
 function renderPromoSection(data) {
+  // --- collect unique promotion names ---
   const promos = [...new Set(
-    data.map(r => (r["promotion name"] || "").trim()).filter(x => x !== "")
+    data.map(r => (r["promotion name"] || "").trim()).filter(Boolean)
   )].sort();
 
   const sel = document.getElementById("promos");
@@ -225,63 +226,68 @@ function renderPromoSection(data) {
     sel.appendChild(o);
   });
 
-  // Auto-select all
+  // auto-select all by default
   if (promos.length > 0) Array.from(sel.options).forEach(o => o.selected = true);
-  sel.size = Math.min(promos.length, 10);
+  sel.size = Math.min(promos.length, 8);
 
   drawPromos();
 
+  function parseDate(val) {
+    // normalize any "MM/DD/YYYY", "YYYY-MM-DD", or timestamp
+    const d = new Date(val.replace(/[^0-9/: -]/g, "").trim());
+    return isNaN(d) ? null : d;
+  }
+
   function drawPromos() {
-    const mode = document.getElementById("promoView").value;
     const selected = Array.from(sel.selectedOptions).map(o => o.value);
     const used = selected.length ? selected : promos;
-    const filtered = data.filter(r => used.includes((r["promotion name"] || "").trim()));
 
-    // Parse month keys from created date (support slashes, dashes, timestamps)
-    const months = [...new Set(filtered.map(r => {
-      const raw = (r["created date"] || "").trim();
-      const d = new Date(raw);
-      if (isNaN(d)) return null;
-      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-    }).filter(Boolean))].sort();
+    // filter only rows with valid dates
+    const filtered = data.filter(r => {
+      const promo = (r["promotion name"] || "").trim();
+      const hasPromo = used.includes(promo);
+      const d = parseDate(r["created date"] || "");
+      return hasPromo && d;
+    });
 
-    if (months.length === 0) {
+    if (!filtered.length) {
       document.getElementById("promoChart").innerHTML =
-        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signup data found for selected promotions.</p>";
+        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No data available for the selected promotions.</p>";
       return;
     }
 
-    // Build grouped bars per promotion
-    const traces = [];
-    used.forEach(promo => {
+    // build month buckets
+    const months = [...new Set(filtered.map(r => {
+      const d = parseDate(r["created date"]);
+      return d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : null;
+    }).filter(Boolean))].sort();
+
+    const traces = used.map(promo => {
       const series = months.map(m => {
         return filtered.filter(r => {
-          const raw = (r["created date"] || "").trim();
-          const d = new Date(raw);
-          if (isNaN(d)) return false;
-          const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-          return key === m && (r["promotion name"] || "").trim() === promo;
+          const p = (r["promotion name"] || "").trim();
+          const d = parseDate(r["created date"]);
+          if (!d) return false;
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          return p === promo && key === m;
         }).length;
       });
-      if (series.some(v => v > 0)) {
-        const labels = months.map(m => {
+      return {
+        x: months.map(m => {
           const [y, mm] = m.split("-");
-          const d = new Date(y, parseInt(mm) - 1);
-          return d.toLocaleString("default", { month: "short", year: "numeric" });
-        });
-        traces.push({
-          x: labels,
-          y: series,
-          name: promo,
-          type: "bar",
-          marker: { color: getBarColor() }
-        });
-      }
-    });
+          return new Date(y, parseInt(mm) - 1)
+            .toLocaleString("default", { month: "short", year: "numeric" });
+        }),
+        y: series,
+        name: promo,
+        type: "bar",
+        marker: { color: getBarColor() }
+      };
+    }).filter(t => t.y.some(v => v > 0));
 
-    if (traces.length === 0) {
+    if (!traces.length) {
       document.getElementById("promoChart").innerHTML =
-        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signups for selected promotions.</p>";
+        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signups recorded yet.</p>";
       return;
     }
 
@@ -293,9 +299,9 @@ function renderPromoSection(data) {
     );
   }
 
-  document.getElementById("promoView").onchange = drawPromos;
   sel.onchange = drawPromos;
 }
+
 
 
 // ----- Helpers for chart theming -----
@@ -386,6 +392,7 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
 
