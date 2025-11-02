@@ -103,7 +103,7 @@
   </div>
 
   <div class="card" style="margin-top:18px;">
-    <div class="section-title">Promotions — Signups Over Time</div>
+    <div class="section-title">Top 5 Promotions by Total Signups</div>
     <div class="toolbar">
       <label class="pill">Promotion Name (multi-select)
         <select class="multi" id="promos" multiple size="6"></select>
@@ -190,6 +190,8 @@ function renderRegion(data){
     getChartLayout("Signups","Region"),{displayModeBar:false});
 }
 
+
+  // ----- Promotion section -----
 function renderImpact(data){
   const m={};
   data.forEach(r=>{
@@ -212,20 +214,21 @@ function renderImpact(data){
 }
 
 function renderPromoSection(data) {
-  // Collect all promotions and count them
+  // --- count all promotions ---
   const promoCounts = {};
   data.forEach(r => {
     const promo = (r["promotion name"] || "").trim();
     if (promo) promoCounts[promo] = (promoCounts[promo] || 0) + 1;
   });
 
-  // Sort promotions by count descending and take top 5
+  // --- sort and take top 5 ---
   const topPromos = Object.entries(promoCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
+  const chartEl = document.getElementById("promoChart");
   if (topPromos.length === 0) {
-    document.getElementById("promoChart").innerHTML =
+    chartEl.innerHTML =
       "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No promotion data available.</p>";
     return;
   }
@@ -245,10 +248,10 @@ function renderPromoSection(data) {
     }],
     {
       ...getChartLayout("Signups", "Promotion Name"),
-      margin: { t: 20, l: 120, r: 20, b: 40 },
-      xaxis: { title: "Signups", color: document.body.classList.contains("dark") ? "#f1f5f9" : "#0f172a" },
-      yaxis: { title: "", color: document.body.classList.contains("dark") ? "#f1f5f9" : "#0f172a" },
-      showlegend: false
+      margin: { t: 30, l: 140, r: 20, b: 40 },
+      showlegend: false,
+      xaxis: { title: "Signups" },
+      yaxis: { automargin: true }
     },
     { displayModeBar: false }
   );
@@ -343,6 +346,7 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
 
