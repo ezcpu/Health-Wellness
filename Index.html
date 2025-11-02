@@ -212,96 +212,47 @@ function renderImpact(data){
 }
 
 function renderPromoSection(data) {
-  // --- collect unique promotion names ---
-  const promos = [...new Set(
-    data.map(r => (r["promotion name"] || "").trim()).filter(Boolean)
-  )].sort();
-
-  const sel = document.getElementById("promos");
-  sel.innerHTML = "";
-  promos.forEach(p => {
-    const o = document.createElement("option");
-    o.value = p;
-    o.textContent = p;
-    sel.appendChild(o);
+  // Collect all promotions and count them
+  const promoCounts = {};
+  data.forEach(r => {
+    const promo = (r["promotion name"] || "").trim();
+    if (promo) promoCounts[promo] = (promoCounts[promo] || 0) + 1;
   });
 
-  // auto-select all by default
-  if (promos.length > 0) Array.from(sel.options).forEach(o => o.selected = true);
-  sel.size = Math.min(promos.length, 8);
+  // Sort promotions by count descending and take top 5
+  const topPromos = Object.entries(promoCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
-  drawPromos();
-
-  function parseDate(val) {
-    // normalize any "MM/DD/YYYY", "YYYY-MM-DD", or timestamp
-    const d = new Date(val.replace(/[^0-9/: -]/g, "").trim());
-    return isNaN(d) ? null : d;
+  if (topPromos.length === 0) {
+    document.getElementById("promoChart").innerHTML =
+      "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No promotion data available.</p>";
+    return;
   }
 
-  function drawPromos() {
-    const selected = Array.from(sel.selectedOptions).map(o => o.value);
-    const used = selected.length ? selected : promos;
+  const labels = topPromos.map(([name]) => name);
+  const values = topPromos.map(([, count]) => count);
 
-    // filter only rows with valid dates
-    const filtered = data.filter(r => {
-      const promo = (r["promotion name"] || "").trim();
-      const hasPromo = used.includes(promo);
-      const d = parseDate(r["created date"] || "");
-      return hasPromo && d;
-    });
-
-    if (!filtered.length) {
-      document.getElementById("promoChart").innerHTML =
-        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No data available for the selected promotions.</p>";
-      return;
-    }
-
-    // build month buckets
-    const months = [...new Set(filtered.map(r => {
-      const d = parseDate(r["created date"]);
-      return d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : null;
-    }).filter(Boolean))].sort();
-
-    const traces = used.map(promo => {
-      const series = months.map(m => {
-        return filtered.filter(r => {
-          const p = (r["promotion name"] || "").trim();
-          const d = parseDate(r["created date"]);
-          if (!d) return false;
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-          return p === promo && key === m;
-        }).length;
-      });
-      return {
-        x: months.map(m => {
-          const [y, mm] = m.split("-");
-          return new Date(y, parseInt(mm) - 1)
-            .toLocaleString("default", { month: "short", year: "numeric" });
-        }),
-        y: series,
-        name: promo,
-        type: "bar",
-        marker: { color: getBarColor() }
-      };
-    }).filter(t => t.y.some(v => v > 0));
-
-    if (!traces.length) {
-      document.getElementById("promoChart").innerHTML =
-        "<p style='text-align:center;color:var(--muted);margin-top:20px;'>No signups recorded yet.</p>";
-      return;
-    }
-
-    Plotly.newPlot(
-      "promoChart",
-      traces,
-      { ...getChartLayout("Signups", "Month"), barmode: "group", legend: { orientation: "h" } },
-      { displayModeBar: false }
-    );
-  }
-
-  sel.onchange = drawPromos;
+  Plotly.newPlot(
+    "promoChart",
+    [{
+      x: values,
+      y: labels,
+      type: "bar",
+      orientation: "h",
+      marker: { color: getBarColor() },
+      hovertemplate: "%{y}: %{x} signups<extra></extra>"
+    }],
+    {
+      ...getChartLayout("Signups", "Promotion Name"),
+      margin: { t: 20, l: 120, r: 20, b: 40 },
+      xaxis: { title: "Signups", color: document.body.classList.contains("dark") ? "#f1f5f9" : "#0f172a" },
+      yaxis: { title: "", color: document.body.classList.contains("dark") ? "#f1f5f9" : "#0f172a" },
+      showlegend: false
+    },
+    { displayModeBar: false }
+  );
 }
-
 
 
 // ----- Helpers for chart theming -----
@@ -392,6 +343,7 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
 
