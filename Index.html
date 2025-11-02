@@ -104,18 +104,7 @@
 
   <div class="card" style="margin-top:18px;">
     <div class="section-title">Top 5 Promotions by Total Signups</div>
-    <div class="toolbar">
-      <label class="pill">Promotion Name (multi-select)
-        <select class="multi" id="promos" multiple size="6"></select>
-      </label>
-      <label class="pill">View
-        <select id="promoView">
-          <option selected value="all">All</option>
-          <option value="monthly">Monthly</option>
-        </select>
-      </label>
-    </div>
-    <div id="promoChart"></div>
+   <div id="promoChart"></div>
   </div>
 </div>
 
@@ -190,8 +179,6 @@ function renderRegion(data){
     getChartLayout("Signups","Region"),{displayModeBar:false});
 }
 
-
-  // ----- Promotion section -----
 function renderImpact(data){
   const m={};
   data.forEach(r=>{
@@ -346,6 +333,7 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
 
