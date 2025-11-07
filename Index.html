@@ -297,16 +297,6 @@ function renderKPIs(data, prevData=[]){
       ${tenTrend.symbol} ${tenTrend.text}
     </div>`;
 
-  const c15={US:0,CAN:0},cBC={US:0,CAN:0};
-  data.forEach(r=>{
-    const promo=(r["promotion name"]||"").toUpperCase(),reg=(r["region"]||"").toUpperCase();
-    if(promo.includes("CORPFM15"))c15[reg]=(c15[reg]||0)+1;
-    if(promo.includes("CORPFMBC"))cBC[reg]=(cBC[reg]||0)+1;
-  });
-  document.getElementById("kpiCORPFM15").textContent=`US: ${fmtNum(c15.US)} | CAN: ${fmtNum(c15.CAN)}`;
-  document.getElementById("kpiCORPFMBC").textContent=`US: ${fmtNum(cBC.US)} | CAN: ${fmtNum(cBC.CAN)}`;
-}
-
 function renderRegion(data){
   const c={US:0,CAN:0};
   data.forEach(r=>{const reg=(r["region"]||"").toUpperCase();if(c[reg]!=null)c[reg]++;});
@@ -545,6 +535,7 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
 
