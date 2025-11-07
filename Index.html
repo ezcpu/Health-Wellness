@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Health & Wellness Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<title>Health &amp; Wellness Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-
+</head>
 <style>
 :root {
   --bg:#ffffff; --text:#0f172a; --muted:#51607a; --card:#ffffff; --border:#e5eaf1;
@@ -23,10 +23,25 @@ body{margin:0;padding:24px;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;bac
 h1{font-size:28px;margin:0 0 6px 0;font-weight:700;letter-spacing:.2px}
 .small{font-size:13px;color:var(--muted);margin-bottom:14px;}
 .tabs{display:flex;gap:10px;margin:14px 0 18px;flex-wrap:wrap;}
-.tab-button{padding:8px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;box-shadow:var(--shadow);}
-.tab-button:hover{border-color:#c7d2e2}
-.tab-button.active{background:linear-gradient(180deg,var(--us),#1d4ed8);color:#fff;border-color:transparent;}
-.tab-content{display:none;}
+.tab-button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  color: var(--text); /* <-- this makes text switch in dark mode */
+}
+
+.tab-button:hover {
+  border-color: #c7d2e2;
+}
+
+.tab-button.active {
+  background: linear-gradient(180deg, var(--us), #1d4ed8);
+  color: #fff;
+  border-color: transparent;
+}.tab-content{display:none;}
 .tab-content.active{display:block;}
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
@@ -485,5 +500,4 @@ function rerenderAll(){
 </script>
 </body>
 </html>
-
 
