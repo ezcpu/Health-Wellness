@@ -447,7 +447,7 @@ let GLOBAL_DATA=[], MONTHS=[];
 async function loadData(){
   const status=document.getElementById("loadStatus");
   try{
-    const sheetUrl="hhttps://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv");
+    const sheetUrl="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv");
     const res=await fetch(sheetUrl);
     const text=await res.text();
 
@@ -545,5 +545,6 @@ window.addEventListener("DOMContentLoaded",loadData);
 </script>
 </body>
 </html>
+
 
 
