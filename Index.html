@@ -2,541 +2,485 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Health Wellness Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+
 <style>
-  :root {
-    --bg: #ffffff;
-    --text: #0f172a;
-    --muted: #51607a;
-    --card: #ffffff;
-    --border: #e5eaf1;
-    --ring: #2a70ff33;
-  }
-  body.dark {
-    --bg: #0f172a;
-    --text: #f1f5f9;
-    --muted: #a3b0c3;
-    --card: #1e293b;
-    --border: #334155;
-    --ring: #60a5fa33;
-  }
-  *{box-sizing:border-box;transition:background-color .3s,color .3s,border-color .3s;}
-  body{margin:0;padding:28px;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
-  h1{font-size:28px;margin:0;font-weight:700;}
-  .updated{color:var(--muted);font-size:13px;margin-top:4px;margin-bottom:18px;}
-  .tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
-  .tab-button{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;}
-  .tab-button:hover{background:#eef2ff;}
-  body.dark .tab-button:hover{background:#1e293b;}
-  .tab-button.active{background:#2a70ff;color:#fff;border-color:#2a70ff;}
-  .tab-content{display:none;}
-  .tab-content.active{display:block;}
-  .grid{display:grid;grid-template-columns:1.2fr 2fr;gap:18px;}
-  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
-  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;}
-  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;}
-  .kpis2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
-  .kpi{border:1px solid var(--border);border-radius:12px;padding:14px;}
-  .kpi h3{margin:0;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
-  .kpi .val{margin-top:6px;font-size:22px;font-weight:700;}
-  .legend{font-size:13px;color:var(--muted);margin-bottom:10px;}
-  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 14px;}
-  select,.multi{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:140px;}
-  select:focus{outline:none;box-shadow:0 0 0 6px var(--ring);}
-  .multi{min-width:260px;max-width:420px;}
-  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:12px;}
-  .section-title{font-size:16px;font-weight:700;margin:8px 0 8px;}
-  iframe{width:100%;height:80vh;border:none;}
-  .changelog{line-height:1.6;font-size:14px;color:var(--text);}
-  .changelog h2{font-size:18px;margin-top:0;margin-bottom:8px;}
-  .theme-toggle{margin-left:auto;padding:6px 12px;font-size:12px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;color:var(--text);}
-  .mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-  @media(max-width:1180px){.grid-3{grid-template-columns:1fr 1fr}.mini-grid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:1060px){.grid{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+:root {
+  --bg:#ffffff; --text:#0f172a; --muted:#51607a; --card:#ffffff; --border:#e5eaf1;
+  --us:#2563eb; --can:#9333ea; --accent:#10b981; --warn:#f59e0b;
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+}
+body.dark {
+  --bg:#0f172a; --text:#f1f5f9; --muted:#a3b0c3; --card:#0b1220; --border:#1f2a3a;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;transition:background-color .25s,color .25s,border-color .25s;}
+html,body{height:100%}
+body{margin:0;padding:24px;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
+h1{font-size:28px;margin:0 0 6px 0;font-weight:700;letter-spacing:.2px}
+.small{font-size:13px;color:var(--muted);margin-bottom:14px;}
+.tabs{display:flex;gap:10px;margin:14px 0 18px;flex-wrap:wrap;}
+.tab-button{padding:8px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);cursor:pointer;box-shadow:var(--shadow);}
+.tab-button:hover{border-color:#c7d2e2}
+.tab-button.active{background:linear-gradient(180deg,var(--us),#1d4ed8);color:#fff;border-color:transparent;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:var(--shadow);}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.kpi{border:1px solid var(--border);border-radius:14px;padding:14px;background:var(--card);box-shadow:var(--shadow);}
+.kpi h3{margin:0;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi .val{margin-top:6px;font-size:22px;font-weight:700;}
+.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0 14px;}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:12px;}
+select{appearance:none;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:180px;box-shadow:var(--shadow);}
+select:focus{outline:none;border-color:#a7b6cc}
+.theme-toggle{margin-left:auto;padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--border);background:var(--card);cursor:pointer;color:var(--text);box-shadow:var(--shadow);}
+.legend{font-size:13px;color:var(--muted);margin-bottom:8px;}
+iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--card);box-shadow:var(--shadow);}
+
+@media(max-width:1200px){.grid-3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr);} .grid-3,.grid-2{grid-template-columns:1fr;}}
+@media(max-width:520px){body{padding:16px;} h1{font-size:24px;} .kpi .val{font-size:20px}}
 </style>
 </head>
 <body>
-<h1 style="display:flex;align-items:center;justify-content:space-between;">
-  Health Wellness Dashboard
-  <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
-</h1>
-<div id="loadStatus" style="color:var(--muted);font-size:14px;margin-bottom:10px;">Loading data...</div>
-<div class="updated">Data automatically loaded from Google Sheets</div>
+  <h1 style="display:flex;align-items:center;justify-content:space-between;">
+    Health Wellness Dashboard
+    <button id="themeToggle" class="theme-toggle">🌙 Dark Mode</button>
+  </h1>
+  <div id="loadStatus" class="small">Loading data…</div>
 
-<div class="tabs">
-  <button class="tab-button active" onclick="openTab('current')">Current Data</button>
- <button class="tab-button" onclick="openTab('clubInsights')">Club Insights</button>
-  <button class="tab-button" onclick="openTab('active')">Active Partners</button>
-  <button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
-  <button class="tab-button" onclick="openTab('changelog')">Changelog</button>
-</div>
+  <div class="tabs">
+    <button class="tab-button active" onclick="openTab('current')">Current Data</button>
+    <button class="tab-button" onclick="openTab('clubInsights')">Club Insights</button>
+    <button class="tab-button" onclick="openTab('active')">Active Partners</button>
+    <button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
+    <button class="tab-button" onclick="openTab('changelog')">Changelog</button>
+  </div>
 
-<!-- CURRENT DATA -->
-<div class="tab-content active" id="current">
-  <div class="grid">
-    <div>
-      <div class="kpis">
-        <div class="kpi"><h3>Total Members</h3><div class="val" id="kpiTotal">0</div></div>
-        <div class="kpi"><h3>Total BLACK CARD MEMBER</h3><div class="val" id="kpiBC">0</div></div>
-        <div class="kpi"><h3>Total 10NR</h3><div class="val" id="kpi10NR">0</div></div>
-      </div>
-      <div class="card">
-        <div class="legend">Region Breakdown (CAN vs US)</div>
-        <div id="regionChart"></div>
-      </div>
+  <!-- CURRENT DATA -->
+  <div class="tab-content active" id="current">
+    <div class="kpis">
+      <div class="kpi"><h3>Total Members</h3><div class="val" id="kpiTotal">0</div></div>
+      <div class="kpi"><h3>Black Card</h3><div class="val" id="kpiBC">0</div></div>
+      <div class="kpi"><h3>10NR</h3><div class="val" id="kpi10NR">0</div></div>
+      <div class="kpi"><h3>Unique Promo Codes</h3><div class="val" id="kpiPromo">0</div></div>
     </div>
 
+    <div class="grid-3">
+      <div class="card"><div class="legend">Region Breakdown — Total Members</div><div id="regionTotalChart"></div></div>
+      <div class="card"><div class="legend">Region Breakdown — Black Card</div><div id="regionBCChart"></div></div>
+      <div class="card"><div class="legend">Region Breakdown — 10NR</div><div id="region10NRChart"></div></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:18px;">
+      <div class="card"><div class="legend">Monthly Impact — US</div><div id="impactUS"></div></div>
+      <div class="card"><div class="legend">Monthly Impact — CAN</div><div id="impactCAN"></div></div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="legend">Top 5 Promotions by Region (US vs CAN)</div>
+      <div id="promoChart"></div>
+    </div>
+  </div>
+
+  <!-- CLUB INSIGHTS -->
+  <div class="tab-content" id="clubInsights">
     <div class="card">
-      <div class="legend">Monthly Impact — total signups per month</div>
-      <div class="toolbar" style="justify-content:flex-end">
+      <div class="toolbar">
+        <label class="pill">Select Club
+          <select id="clubSelect"><option value="__ALL__" selected>All Clubs</option></select>
+        </label>
         <label class="pill">Select Month
-          <select id="monthSelect">
-            <option value="all" selected>All Months</option>
-          </select>
+          <select id="monthSelect"><option value="all" selected>All Months</option></select>
         </label>
       </div>
-      <div id="impactChart"></div>
+
+      <div class="kpis">
+        <div class="kpi"><h3>Total Members</h3><div class="val" id="ckpiTotal">0</div></div>
+        <div class="kpi"><h3>Black Card</h3><div class="val" id="ckpiBC">0</div></div>
+        <div class="kpi"><h3>10NR</h3><div class="val" id="ckpi10NR">0</div></div>
+        <div class="kpi"><h3>Unique Promo Codes</h3><div class="val" id="ckpiCodes">0</div></div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card"><div class="legend">Region Split</div><div id="clubRegionDonut"></div></div>
+        <div class="card"><div class="legend">Promo Code Usage</div><div id="clubUsage"></div></div>
+        <div class="card"><div class="legend">Monthly Trend</div><div id="clubTrend"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="legend">Top 5 Clubs by Promo Usage (US vs CAN)</div>
+      <div id="topClubsChart"></div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:18px;">
-    <div class="section-title">Top 5 Promotions by Total Signups</div>
-    <div id="promoChart"></div>
-  </div>
-</div>
-
-<!-- ACTIVE & PENDING IFRAME TABS -->
-<div class="tab-content" id="active">
-  <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&single=true"></iframe>
-</div>
-<div class="tab-content" id="pending">
-  <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=279243253&single=true"></iframe>
-</div>
-
-<!-- NEW: CLUB INSIGHTS TAB -->
-<div class="tab-content" id="clubInsights">
-  <div class="card">
-    <div class="section-title">Club Insights</div>
-    <div class="toolbar">
-      <label class="pill">Select Club
-        <select id="clubSelectClub" class="multi">
-          <option value="__ALL__" selected>All Clubs</option>
-        </select>
-      </label>
-      <label class="pill">Select Month
-        <select id="monthSelectClub">
-          <option value="all" selected>All Months</option>
-        </select>
-      </label>
-    </div>
-
-    <!-- KPI Row -->
-    <div class="mini-grid" style="margin-top:8px;">
-      <div class="kpi"><h3>Total Members</h3><div class="val" id="ckpiTotal">0</div></div>
-      <div class="kpi"><h3>Black Card</h3><div class="val" id="ckpiBC">0</div></div>
-      <div class="kpi"><h3>10NR</h3><div class="val" id="ckpi10NR">0</div></div>
-      <div class="kpi"><h3>Unique Codes Used</h3><div class="val" id="ckpiCodes">0</div></div>
-    </div>
-  </div>
-
-  <div class="grid-3" style="margin-top:18px;">
+  <!-- ACTIVE & PENDING -->
+  <div class="tab-content" id="active">
     <div class="card">
-      <div class="legend">Region Split (US vs CAN)</div>
-      <div id="clubRegionDonut"></div>
-    </div>
-    <div class="card">
-      <div class="legend">Promo Code Usage (Selected Club)</div>
-      <div id="clubUsageChart2"></div>
-    </div>
-    <div class="card">
-      <div class="legend">Monthly Trend (Signups Over Time)</div>
-      <div id="clubTrendLine"></div>
+      <div class="legend">Active Partners</div>
+      <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=1889691124&single=true"></iframe>
     </div>
   </div>
 
-  <div class="card" style="margin-top:18px;">
-    <div class="section-title">Top 5 Clubs by Promo Usage (US vs CAN)</div>
-    <div id="topClubsChart2"></div>
+  <div class="tab-content" id="pending">
+    <div class="card">
+      <div class="legend">Pending Inquiries</div>
+      <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=279243253&single=true"></iframe>
+    </div>
   </div>
-</div>
 
-<!-- CHANGELOG -->
-<div class="tab-content" id="changelog">
-  <div class="card changelog">
-    <h2>Changelog</h2>
-    <ul>
-      <li><strong>10.31.2025:</strong> Added Month selector + dark/light mode toggle 🌙</li>
-      <li><strong>10.31.2025:</strong> Switched Monthly Impact to bar chart for clarity.</li>
-      <li><strong>10.31.2025:</strong> Linked CSV file for on-the-fly update of Data.</li>
-      <li><strong>Now:</strong> New <em>Club Insights</em> tab with Club filter, Region donut, Promo Usage, Trend line, and Top 5 Clubs (US vs CAN).</li>
-    </ul>
+  <!-- CHANGELOG -->
+  <div class="tab-content" id="changelog">
+    <div class="card">
+      <h2 style="margin:0 0 8px 0;">Changelog</h2>
+      <ul>
+        <li>Filtering "CLEMENSBC","CLEMENSWC","MTPCORPWC","CORPBC","CORP15","CORPFMBC","CORPFM15","CORP10","PFCORP10","PFCORPBC"</li>
+        <li>Static Top 5 Clubs (overall US+CAN)</li>
+        <li>Filters affect KPIs, Region, Promo Usage & Trend</li>
+        
+      </ul>
+    </div>
   </div>
-</div>
 
 <script>
-// ----- Tabs & Theme Toggle -----
-function openTab(tabName){
-  document.querySelectorAll(".tab-content").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".tab-button").forEach(btn=>btn.classList.remove("active"));
-  document.getElementById(tabName).classList.add("active");
-  document.querySelector(`button[onclick="openTab('${tabName}')"]`).classList.add("active");
+/* -------- Tabs & Theme -------- */
+function openTab(tab){
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(tab).classList.add("active");
+  document.querySelector(`button[onclick="openTab('${tab}')"]`).classList.add("active");
+  // ensure visible tab charts are sized correctly after switching
+  requestAnimationFrame(resizeAllCharts);
 }
-
-document.getElementById("themeToggle").addEventListener("click",()=>{
+document.getElementById("themeToggle").onclick=()=>{
   document.body.classList.toggle("dark");
-  const isDark = document.body.classList.contains("dark");
-  document.getElementById("themeToggle").textContent=isDark?"☀️ Light Mode":"🌙 Dark Mode";
-  updateChartThemes(isDark);
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-});
-
-// Restore theme preference
+  const dark=document.body.classList.contains("dark");
+  localStorage.setItem("theme",dark?"dark":"light");
+  document.getElementById("themeToggle").textContent=dark?"☀️ Light Mode":"🌙 Dark Mode";
+  rerenderAll(); // re-apply palettes + grid colors
+  requestAnimationFrame(resizeAllCharts);
+};
 window.addEventListener("DOMContentLoaded",()=>{
-  const savedTheme = localStorage.getItem("theme");
-  if(savedTheme==="dark"){
+  if(localStorage.getItem("theme")==="dark"){
     document.body.classList.add("dark");
     document.getElementById("themeToggle").textContent="☀️ Light Mode";
   }
+  loadData();
+});
+window.addEventListener("resize", ()=>{
+  // debounce a bit
+  clearTimeout(window.__rsz);
+  window.__rsz=setTimeout(resizeAllCharts,120);
 });
 
-// ----- Config: Promo Codes (normalized) -----
-const RAW_CODES = [
-  "CLEMENSBC","CLEMENSWC","MTPCORPWC","CORPBC","CORP15","CORPFMBC","CORPFM15","CORP10","PFCORP10","PFCORPBC"
-];
-const PROMO_CODES = new Set(RAW_CODES.map(n => normalizeCode(n)));
-function normalizeCode(s){ return (s||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
-function codeIncluded(name){ return PROMO_CODES.has(normalizeCode(name)); }
+/* -------- Utils -------- */
+const RAW_CODES=["CLEMENSBC","CLEMENSWC","MTPCORPWC","CORPBC","CORP15","CORPFMBC","CORPFM15","CORP10","PFCORP10","PFCORPBC"];
+function codeIncluded(n){return RAW_CODES.some(c=>(n||"").toUpperCase().includes(c));}
+function normRegion(v){
+  const s=(v||"").toUpperCase().trim();
+  if(["CA","CAN","CANADA"].includes(s))return"CAN";
+  if(["US","USA","UNITED STATES"].includes(s))return"US";
+  return s;
+}
+function monthKeyFromDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
 
-// ----- Utility -----
-function fmtNum(n){return Number(n||0).toLocaleString();}
-function normalizeKeys(rec){const f={};for(const k in rec){f[k.trim().toLowerCase()]=rec[k];}return f;}
-function filterByMonth(data,selectedMonth="all"){
-  if(selectedMonth==="all")return data;
-  return data.filter(r=>{
-    const d=new Date((r["created date"]||"").trim());
-    if(isNaN(d))return false;
-    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-    return key===selectedMonth;
-  });
-}
-function toMonthKey(r){
-  const d=new Date((r["created date"]||"").trim());
-  if(isNaN(d))return null;
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-}
-function getBarColor(){return document.body.classList.contains("dark")?"#60a5fa":"#2a70ff";}
-function getChartLayout(yTitle,xTitle){
+// Centralized palette + layout
+function palette(){
   const dark=document.body.classList.contains("dark");
+  return {
+    paper: dark?"#0f172a":"#ffffff",
+    plot:  dark?"#0f172a":"#ffffff",
+    grid:  dark?"#1f2a3a":"#e5eaf1",
+    font:  dark?"#f1f5f9":"#0f172a",
+    us:    "#2563eb",
+    can:   "#9333ea",
+    accent:"#10b981"
+  };
+}
+function getLayout(y,x){
+  const p=palette();
   return{
-    margin:{t:20,l:50,r:10,b:40},
-    yaxis:{title:yTitle,color:dark?"#f1f5f9":"#0f172a",gridcolor:dark?"#334155":"#e5eaf1"},
-    xaxis:{title:xTitle,color:dark?"#f1f5f9":"#0f172a",gridcolor:dark?"#334155":"#e5eaf1"},
-    paper_bgcolor:dark?"#0f172a":"#ffffff",
-    plot_bgcolor:dark?"#0f172a":"#ffffff",
-    font:{color:dark?"#f1f5f9":"#0f172a"},
-    showlegend:true,
+    margin:{t:18,b:48,l:60,r:10},
+    paper_bgcolor:p.paper,
+    plot_bgcolor:p.plot,
+    font:{color:p.font},
+    xaxis:{title:x,gridcolor:p.grid,zerolinecolor:p.grid},
+    yaxis:{title:y,gridcolor:p.grid,zerolinecolor:p.grid},
+    legend:{orientation:"h",y:1.12,x:0}
   };
 }
-function updateChartThemes(isDark){
-  const update={
-    "paper_bgcolor":isDark?"#0f172a":"#ffffff",
-    "plot_bgcolor":isDark?"#0f172a":"#ffffff",
-    "font.color":isDark?"#f1f5f9":"#0f172a",
-    "xaxis.color":isDark?"#f1f5f9":"#0f172a",
-    "yaxis.color":isDark?"#f1f5f9":"#0f172a",
-    "xaxis.gridcolor":isDark?"#334155":"#e5eaf1",
-    "yaxis.gridcolor":isDark?"#334155":"#e5eaf1"
-  };
-  ["regionChart","impactChart","promoChart","clubRegionDonut","clubUsageChart2","clubTrendLine","topClubsChart2"].forEach(id=>{
-    if(document.getElementById(id)){Plotly.relayout(id,update);}
+function resizeAllCharts(){
+  const ids=[
+    "regionTotalChart","regionBCChart","region10NRChart",
+    "impactUS","impactCAN","promoChart",
+    "clubRegionDonut","clubUsage","clubTrend",
+    "topClubsChart"
+  ];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.data){ Plotly.Plots.resize(el); }
   });
 }
 
-// ----- KPI + Charts (Current Tab) -----
-function renderKPIs(data, prevData=[]){
-  const getTrend = (current, previous)=>{
-    if(previous===0) return {symbol:"➖",color:"var(--muted)",text:"0%"};
-    const diff = current - previous;
-    const pct = ((diff / previous) * 100).toFixed(1);
-    let symbol,color;
-    if(diff>0){symbol="▲";color="#16a34a";}
-    else if(diff<0){symbol="▼";color:"#dc2626";}
-    else{symbol="➖";color:"var(--muted)";}
-    return {symbol,color,text:`${diff>0?"+":""}${pct}%`};
-  };
-
-  const total=data.length, prevTotal=prevData.length;
-  const totalTrend=getTrend(total,prevTotal);
-
-  const isType=(row,needle)=>((row["membership type"]||"").toUpperCase().includes(needle));
-  const bcNow=data.filter(r=>isType(r,"BLACK CARD")).length;
-  const bcPrev=prevData.filter(r=>isType(r,"BLACK CARD")).length;
-  const bcTrend=getTrend(bcNow,bcPrev);
-
-  const tenNow=data.filter(r=>isType(r,"10NR")).length;
-  const tenPrev=prevData.filter(r=>isType(r,"10NR")).length;
-  const tenTrend=getTrend(tenNow,tenPrev);
-
-  document.getElementById("kpiTotal").innerHTML=`
-    ${fmtNum(total)}
-    <div style="font-size:12px;color:${totalTrend.color};margin-top:2px;">
-      ${totalTrend.symbol} ${totalTrend.text}
-    </div>`;
-  document.getElementById("kpiBC").innerHTML=`
-    ${fmtNum(bcNow)}
-    <div style="font-size:12px;color:${bcTrend.color};margin-top:2px;">
-      ${bcTrend.symbol} ${bcTrend.text}
-    </div>`;
-  document.getElementById("kpi10NR").innerHTML=`
-    ${fmtNum(tenNow)}
-    <div style="font-size:12px;color:${tenTrend.color};margin-top:2px;">
-      ${tenTrend.symbol} ${tenTrend.text}
-    </div>`;
-
-function renderRegion(data){
-  const c={US:0,CAN:0};
-  data.forEach(r=>{const reg=(r["region"]||"").toUpperCase();if(c[reg]!=null)c[reg]++;});
-  Plotly.newPlot("regionChart",
-    [{x:Object.keys(c),y:Object.values(c),type:"bar",marker:{color:getBarColor()}}],
-    getChartLayout("Signups","Region"),{displayModeBar:false});
-}
-
-function renderImpact(data){
-  const m={};
-  data.forEach(r=>{
-    const d=new Date((r["created date"]||"").trim());
-    if(!isNaN(d)){
-      const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-      m[key]=(m[key]||0)+1;
-    }
-  });
-  const keys=Object.keys(m).sort();
-  const vals=keys.map(k=>m[k]);
-  const labels=keys.map(k=>{
-    const [y,mm]=k.split("-");
-    const d=new Date(y,parseInt(mm)-1);
-    return d.toLocaleString("default",{month:"short",year:"numeric"});
-  });
-  Plotly.newPlot("impactChart",
-    [{x:labels,y:vals,type:"bar",marker:{color:getBarColor()}}],
-    getChartLayout("Signups","Month"),{displayModeBar:false});
-}
-
-function renderPromoSection(data) {
-  const promoCounts = {};
-  data.forEach(r => {
-    const promo = (r["promotion name"] || "").trim();
-    if (promo && codeIncluded(promo)) promoCounts[promo] = (promoCounts[promo] || 0) + 1;
-  });
-  const topPromos = Object.entries(promoCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const chartEl=document.getElementById("promoChart");
-  if(topPromos.length===0){
-    chartEl.innerHTML="<p style='text-align:center;color:var(--muted);margin-top:20px;'>No promotion data available.</p>";
-    return;
-  }
-  const labels=topPromos.map(([name])=>name);
-  const values=topPromos.map(([,count])=>count);
-  Plotly.newPlot("promoChart",
-    [{x:values,y:labels,type:"bar",orientation:"h",marker:{color:getBarColor()},hovertemplate:"%{y}: %{x} signups<extra></extra>"}],
-    {...getChartLayout("Signups","Promotion Name"),margin:{t:30,l:140,r:20,b:40},showlegend:false,xaxis:{title:"Signups"},yaxis:{automargin:true}},
-    {displayModeBar:false});
-}
-
-// ----- CLUB INSIGHTS RENDERERS -----
-function renderClubKPIs(scopeData, prevScopeData){
-  const trend = (cur,prev)=>{
-    if(prev===0) return {sym:"➖",col:"var(--muted)",txt:"0%"};
-    const diff=cur-prev, pct=((diff/prev)*100).toFixed(1);
-    return {sym: diff>0?"▲":(diff<0?"▼":"➖"), col: diff>0?"#16a34a":(diff<0?"#dc2626":"var(--muted)"), txt:`${diff>0?"+":""}${pct}%`};
-  };
-  const isType=(row,needle)=>((row["membership type"]||"").toUpperCase().includes(needle));
-
-  const total=scopeData.length, prevT=prevScopeData.length;
-  const bc=scopeData.filter(r=>isType(r,"BLACK CARD")).length;
-  const prevBC=prevScopeData.filter(r=>isType(r,"BLACK CARD")).length;
-  const ten=scopeData.filter(r=>isType(r,"10NR")).length;
-  const prevTen=prevScopeData.filter(r=>isType(r,"10NR")).length;
-
-  const uCodes = new Set(scopeData.map(r=>(r["promotion name"]||"").trim()).filter(Boolean)).size;
-
-  const t1=trend(total,prevT), t2=trend(bc,prevBC), t3=trend(ten,prevTen);
-
-  document.getElementById("ckpiTotal").innerHTML = `${fmtNum(total)}<div style="font-size:12px;color:${t1.col};margin-top:2px;">${t1.sym} ${t1.txt}</div>`;
-  document.getElementById("ckpiBC").innerHTML    = `${fmtNum(bc)}<div style="font-size:12px;color:${t2.col};margin-top:2px;">${t2.sym} ${t2.txt}</div>`;
-  document.getElementById("ckpi10NR").innerHTML  = `${fmtNum(ten)}<div style="font-size:12px;color:${t3.col};margin-top:2px;">${t3.sym} ${t3.txt}</div>`;
-  document.getElementById("ckpiCodes").textContent = fmtNum(uCodes);
-}
-
-function renderClubRegionDonut(scopeData){
-  const sums={US:0,CAN:0};
-  scopeData.forEach(r=>{const reg=(r["region"]||"").toUpperCase(); if(sums[reg]!=null)sums[reg]++;});
-  Plotly.newPlot("clubRegionDonut",
-    [{labels:["US","CAN"], values:[sums.US,sums.CAN], type:"pie", hole:.55}],
-    { ...getChartLayout("", ""), showlegend:true, margin:{t:10,b:10,l:10,r:10} },
-    {displayModeBar:false});
-}
-
-function renderClubUsageBar(scopeData){
-  const counts={};
-  scopeData.forEach(r=>{
-    const p=(r["promotion name"]||"").trim();
-    if(p && codeIncluded(p)) counts[p]=(counts[p]||0)+1;
-  });
-  const labels=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);
-  const values=labels.map(k=>counts[k]);
-  Plotly.newPlot("clubUsageChart2",
-    [{x:values,y:labels,type:"bar",orientation:"h",marker:{color:getBarColor()},hovertemplate:"%{y}: %{x} uses<extra></extra>"}],
-    {...getChartLayout("Uses","Promo Code"),margin:{t:20,l:140,r:20,b:40},showlegend:false},
-    {displayModeBar:false});
-}
-
-function renderClubTrend(scopeAllMonths, clubFilter){
-  // Build month series for the club (or all)
-  const monthly={};
-  scopeAllMonths.forEach(r=>{
-    if(clubFilter!=="__ALL__" && (r["club name"]||"").trim()!==clubFilter) return;
-    const mk=toMonthKey(r); if(!mk) return;
-    monthly[mk]=(monthly[mk]||0)+1;
-  });
-  const keys=Object.keys(monthly).sort();
-  const y=keys.map(k=>monthly[k]);
-  const x=keys.map(k=>{
-    const [y,mm]=k.split("-");
-    const d=new Date(y,parseInt(mm)-1);
-    return d.toLocaleString("default",{month:"short",year:"numeric"});
-  });
-  Plotly.newPlot("clubTrendLine",
-    [{x,y,type:"scatter",mode:"lines+markers"}],
-    getChartLayout("Signups","Month"),
-    {displayModeBar:false});
-}
-
-function renderTopClubsComparison(scopeData){
-  const totals={}, byCR={}; // totals per club, and breakdown by region
-  scopeData.forEach(r=>{
-    const club=(r["club name"]||"").trim(); if(!club) return;
-    const reg=((r["region"]||"").toUpperCase()==="US")?"US":"CAN";
-    totals[club]=(totals[club]||0)+1;
-    byCR[club]=byCR[club]||{US:0,CAN:0}; byCR[club][reg]+=1;
-  });
-  const top5=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([c])=>c);
-  const us=top5.map(c=>byCR[c]?.US||0);
-  const can=top5.map(c=>byCR[c]?.CAN||0);
-  Plotly.newPlot("topClubsChart2",
-    [{name:"US",x:top5,y:us,type:"bar"},{name:"CAN",x:top5,y:can,type:"bar"}],
-    {...getChartLayout("Uses","Club"),barmode:"group",margin:{t:20,l:60,r:10,b:60},legend:{orientation:"h",y:-0.2}},
-    {displayModeBar:false});
-}
-
-// ----- Data Loading & Wiring -----
-let GLOBAL_DATA=[], MONTHS=[];
+/* -------- Data Load -------- */
+let GLOBAL={data:[],filtered:[],months:[]};
 async function loadData(){
   const status=document.getElementById("loadStatus");
   try{
-    const sheetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv";
-    const res=await fetch(sheetUrl);
+    const url="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8iruNQ-H8vQvlNMSNXiUtOoxI1b8lEyL7YMBOifM2os3qyRTdmQ2_1V2oKk4vMlQifynBfxrN-u-F/pub?output=csv";
+    const res=await fetch(url);
     const text=await res.text();
 
-    // Basic CSV parse
+    // Simple CSV parse (keeps things fast). If your sheet has quoted commas,
+    // consider a tiny CSV parser later.
     const rows=text.trim().split("\n").map(r=>r.split(","));
-    const headers=rows[0];
-    const data=rows.slice(1).map(r=>{const o={};headers.forEach((h,i)=>o[h.trim()]=r[i]);return normalizeKeys(o);});
-    GLOBAL_DATA=data;
-
-    // Month keys
-    MONTHS=[...new Set(GLOBAL_DATA.map(toMonthKey).filter(Boolean))].sort();
-
-    // Build Current tab defaults (latest month)
-    const cur=MONTHS[MONTHS.length-1];
-    const prev=MONTHS[MONTHS.length-2];
-    const curData = filterByMonth(GLOBAL_DATA, cur).filter(r=>codeIncluded(r["promotion name"]||""));
-    const prevData= filterByMonth(GLOBAL_DATA, prev).filter(r=>codeIncluded(r["promotion name"]||""));
-
-    renderKPIs(curData, prevData);
-    renderRegion(curData);
-    renderImpact(GLOBAL_DATA.filter(r=>codeIncluded(r["promotion name"]||"")));
-    renderPromoSection(GLOBAL_DATA);
-
-    // Populate Month selects (both tabs)
-    const monthSelect=document.getElementById("monthSelect");
-    const monthSelectClub=document.getElementById("monthSelectClub");
-    MONTHS.forEach(m=>{
-      const [y,mm]=m.split("-");
-      const d=new Date(y,parseInt(mm)-1);
-      const opt=document.createElement("option"); opt.value=m; opt.textContent=d.toLocaleString("default",{month:"long",year:"numeric"});
-      const opt2=opt.cloneNode(true);
-      monthSelect.appendChild(opt);
-      monthSelectClub.appendChild(opt2);
-    });
-    monthSelect.value="all"; // show all in current Impact by default
-    monthSelectClub.value="all";
-
-    // Populate Club select (from all data filtered to promo codes)
-    const clubSel=document.getElementById("clubSelectClub");
-    const clubs=[...new Set(GLOBAL_DATA.filter(r=>codeIncluded(r["promotion name"]||"")).map(r=>(r["club name"]||"").trim()).filter(Boolean))].sort();
-    clubSel.innerHTML=`<option value="__ALL__" selected>All Clubs</option>`;
-    clubs.forEach(c=>{
-      const o=document.createElement("option");o.value=c;o.textContent=c;clubSel.appendChild(o);
+    const headers=rows[0].map(h=>h.trim().toLowerCase());
+    const data=rows.slice(1).map(r=>{
+      const o={}; headers.forEach((h,i)=>o[h]=r[i]);
+      const d=(o["created date"]||"").trim();
+      o.dateParsed=new Date(d.includes("/")?d.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/,"$3-$1-$2"):d);
+      return o;
     });
 
-    // Initial Club Insights renders (All clubs, all months)
-    const scopeAll=GLOBAL_DATA.filter(r=>codeIncluded(r["promotion name"]||""));
-    renderClubKPIs(scopeAll, []); // no previous when "all"
-    renderClubRegionDonut(scopeAll);
-    renderClubUsageBar(scopeAll);
-    renderClubTrend(scopeAll, "__ALL__");
-    renderTopClubsComparison(scopeAll);
+    GLOBAL.data=data;
+    GLOBAL.filtered=data.filter(r=>codeIncluded(r["promotion name"]));
+    GLOBAL.months=[...new Set(GLOBAL.filtered.map(r=>{
+      const d=r.dateParsed;if(isNaN(d))return null;return monthKeyFromDate(d);
+    }).filter(Boolean))].sort();
 
-    // Listeners (Current Tab)
-    monthSelect.addEventListener("change", e=>{
-      const sel=e.target.value;
-      const mData = (sel==="all"? GLOBAL_DATA: filterByMonth(GLOBAL_DATA, sel)).filter(r=>codeIncluded(r["promotion name"]||""));
-      const prevKey = (sel==="all")? null : (MONTHS.indexOf(sel)>0 ? MONTHS[MONTHS.indexOf(sel)-1] : null);
-      const pData = prevKey? filterByMonth(GLOBAL_DATA, prevKey).filter(r=>codeIncluded(r["promotion name"]||"")) : [];
-      renderKPIs(mData, pData);
-      renderRegion(mData);
-      renderImpact(sel==="all" ? GLOBAL_DATA.filter(r=>codeIncluded(r["promotion name"]||"")) : mData);
-    });
+    renderCurrent(GLOBAL.filtered);
+    setupClubInsights(GLOBAL.filtered);
+    renderTopClubsStatic();
 
-    // Listeners (Club Insights)
-    function rerenderClub(){
-      const selClub=document.getElementById("clubSelectClub").value;
-      const selMonth=document.getElementById("monthSelectClub").value;
-      const scope = (selMonth==="all" ? GLOBAL_DATA : filterByMonth(GLOBAL_DATA, selMonth)).filter(r=>codeIncluded(r["promotion name"]||""));
-      // previous month for trend
-      const prevKey = (selMonth==="all")? null : (MONTHS.indexOf(selMonth)>0 ? MONTHS[MONTHS.indexOf(selMonth)-1] : null);
-      const scopePrev = prevKey? filterByMonth(GLOBAL_DATA, prevKey).filter(r=>codeIncluded(r["promotion name"]||"")) : [];
-
-      const scopedClub = selClub==="__ALL__" ? scope : scope.filter(r => (r["club name"]||"").trim()===selClub);
-      const prevClub = selClub==="__ALL__" ? scopePrev : scopePrev.filter(r => (r["club name"]||"").trim()===selClub);
-
-      renderClubKPIs(scopedClub, prevClub);
-      renderClubRegionDonut(scopedClub);
-      renderClubUsageBar(scopedClub);
-      // trend line should show series over months for that club (ignores month filter to show context)
-      renderClubTrend(scope, selClub);
-      renderTopClubsComparison(scope);
-    }
-    document.getElementById("clubSelectClub").addEventListener("change", rerenderClub);
-    document.getElementById("monthSelectClub").addEventListener("change", rerenderClub);
-
-    status.textContent="✅ Data loaded successfully!"; status.style.color="green";
-  }catch(err){
-    console.error("Error loading data:",err);
-    status.textContent="⚠️ Failed to load data. Check your connection or Google Sheet permissions.";
-    status.style.color="red";
+    status.textContent=`✅ Data loaded: ${GLOBAL.filtered.length} matching rows`;
+    status.style.color="var(--accent)";
+  }catch(e){
+    console.error(e);
+    status.textContent="⚠️ Could not load data.";
+    status.style.color="#ef4444";
   }
 }
-window.addEventListener("DOMContentLoaded",loadData);
+
+/* -------- Current Data Charts -------- */
+function renderCurrent(data){
+  const p=palette();
+
+  // KPIs
+  document.getElementById("kpiTotal").textContent=data.length;
+  document.getElementById("kpiBC").textContent=data.filter(r=>(r["membership type"]||"").toUpperCase().includes("BLACK")).length;
+  document.getElementById("kpi10NR").textContent=data.filter(r=>(r["membership type"]||"").toUpperCase().includes("10NR")).length;
+  document.getElementById("kpiPromo").textContent=new Set(data.map(r=>(r["promotion name"]||"").trim()).filter(Boolean)).size;
+
+  // Region splits
+  const total={US:0,CAN:0}, bc={US:0,CAN:0}, nr={US:0,CAN:0};
+  data.forEach(r=>{
+    const reg=normRegion(r["region"]);
+    if(!(reg in total)) return;
+    total[reg]++;
+    const m=(r["membership type"]||"").toUpperCase();
+    if(m.includes("BLACK")) bc[reg]++;
+    if(m.includes("10NR"))  nr[reg]++;
+  });
+
+  Plotly.newPlot("regionTotalChart",
+    [{x:Object.keys(total),y:Object.values(total),type:"bar",marker:{color:[p.us,p.can]}}],
+    {...getLayout("Members","Region"),height:320},
+    {displayModeBar:false,responsive:true});
+
+  Plotly.newPlot("regionBCChart",
+    [{x:Object.keys(bc),y:Object.values(bc),type:"bar",marker:{color:[p.us,p.can]}}],
+    {...getLayout("Black Card","Region"),height:320},
+    {displayModeBar:false,responsive:true});
+
+  Plotly.newPlot("region10NRChart",
+    [{x:Object.keys(nr),y:Object.values(nr),type:"bar",marker:{color:[p.us,p.can]}}],
+    {...getLayout("10NR","Region"),height:320},
+    {displayModeBar:false,responsive:true});
+
+  // Monthly Impact by region
+  const mUS={}, mCAN={};
+  data.forEach(r=>{
+    const d=r.dateParsed; if(isNaN(d)) return;
+    const key=monthKeyFromDate(d);
+    const reg=normRegion(r["region"]);
+    if(reg==="US")  mUS[key]=(mUS[key]||0)+1;
+    if(reg==="CAN") mCAN[key]=(mCAN[key]||0)+1;
+  });
+  const kUS=Object.keys(mUS).sort(), kCAN=Object.keys(mCAN).sort();
+
+  Plotly.newPlot("impactUS",
+    [{x:kUS,y:kUS.map(k=>mUS[k]),type:"bar",marker:{color:p.us}}],
+    {...getLayout("US Signups","Month"),height:320},
+    {displayModeBar:false,responsive:true});
+
+  Plotly.newPlot("impactCAN",
+    [{x:kCAN,y:kCAN.map(k=>mCAN[k]),type:"bar",marker:{color:p.can}}],
+    {...getLayout("CAN Signups","Month"),height:320},
+    {displayModeBar:false,responsive:true});
+
+  // Top 5 promotions by region (horizontal)
+  const byReg={US:{},CAN:{}}; 
+  data.forEach(r=>{
+    const pnm=(r["promotion name"]||"").trim(); if(!pnm) return;
+    const reg=normRegion(r["region"]); if(!(reg in byReg)) return;
+    byReg[reg][pnm]=(byReg[reg][pnm]||0)+1;
+  });
+  const allPromos=new Set([...Object.keys(byReg.US),...Object.keys(byReg.CAN)]);
+  const totals={}; allPromos.forEach(pn=>totals[pn]=(byReg.US[pn]||0)+(byReg.CAN[pn]||0));
+  const top=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([pn])=>pn);
+
+  if(top.length===0){
+    document.getElementById("promoChart").innerHTML="<p style='text-align:center;color:var(--muted);margin:14px 0;'>No promotion data found.</p>";
+  }else{
+    Plotly.newPlot("promoChart",
+      [
+        {name:"US",  x:top.map(pn=>byReg.US[pn]  ||0), y:top, type:"bar", orientation:"h", marker:{color:p.us}},
+        {name:"CAN", x:top.map(pn=>byReg.CAN[pn] ||0), y:top, type:"bar", orientation:"h", marker:{color:p.can}}
+      ],
+      {...getLayout("Usage","Promo Code"),margin:{t:20,l:150,b:50,r:10},barmode:"group",xaxis:{title:"Usage"},height:360},
+      {displayModeBar:false,responsive:true}
+    );
+  }
+}
+
+/* -------- Club Insights (filters affect these) -------- */
+function setupClubInsights(data){
+  const cs=document.getElementById("clubSelect"), ms=document.getElementById("monthSelect");
+  [...new Set(data.map(r=>(r["club name"]||"").trim()).filter(Boolean))].sort()
+    .forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;cs.appendChild(o);});
+  GLOBAL.months.forEach(m=>{
+    const [y,mm]=m.split("-"); const d=new Date(y,mm-1);
+    const o=document.createElement("option"); o.value=m; o.textContent=d.toLocaleString("default",{month:"long",year:"numeric"});
+    ms.appendChild(o);
+  });
+  cs.onchange=ms.onchange=()=>renderClubInsights();
+  renderClubInsights();
+}
+
+function renderClubInsights(){
+  const p=palette();
+  const c=document.getElementById("clubSelect").value;
+  const m=document.getElementById("monthSelect").value;
+  let rows=[...GLOBAL.filtered];
+  if(c!=="__ALL__") rows=rows.filter(r=>(r["club name"]||"").trim()===c);
+  if(m!=="all") rows=rows.filter(r=>{
+    const d=r.dateParsed; if(isNaN(d)) return false;
+    return monthKeyFromDate(d)===m;
+  });
+
+  // KPIs
+  document.getElementById("ckpiTotal").textContent=rows.length;
+  document.getElementById("ckpiBC").textContent=rows.filter(r=>(r["membership type"]||"").toUpperCase().includes("BLACK")).length;
+  document.getElementById("ckpi10NR").textContent=rows.filter(r=>(r["membership type"]||"").toUpperCase().includes("10NR")).length;
+  document.getElementById("ckpiCodes").textContent=new Set(rows.map(r=>(r["promotion name"]||"").trim()).filter(Boolean)).size;
+
+  // Region donut
+  const sum={US:0,CAN:0};
+  rows.forEach(r=>{const reg=normRegion(r["region"]); if(sum[reg]!=null) sum[reg]++;});
+  Plotly.newPlot("clubRegionDonut",
+    [{labels:["US","CAN"],values:[sum.US,sum.CAN],type:"pie",hole:.55,
+      marker:{colors:[p.us,p.can]},textinfo:"label+percent",hovertemplate:"%{label}: %{value}<extra></extra>"}],
+    {paper_bgcolor:p.paper,plot_bgcolor:p.plot,showlegend:false},
+    {displayModeBar:false,responsive:true});
+
+  // Promo usage (top 5 in the scoped rows)
+  const pc={}; rows.forEach(r=>{const pn=(r["promotion name"]||"").trim(); if(pn) pc[pn]=(pc[pn]||0)+1;});
+  const sorted=Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  Plotly.newPlot("clubUsage",
+    [{x:sorted.map(s=>s[1]),y:sorted.map(s=>s[0]),type:"bar",orientation:"h",marker:{color:p.accent}}],
+    {...getLayout("Usage","Promo Code"),margin:{t:10,l:140,b:50,r:10}},
+    {displayModeBar:false,responsive:true});
+
+  // Monthly trend
+  const monthly={};
+  rows.forEach(r=>{
+    const d=r.dateParsed; if(isNaN(d)) return;
+    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    monthly[key]=(monthly[key]||0)+1;
+  });
+  const keys=Object.keys(monthly).sort();
+  const labels=keys.map(k=>{
+    const [yy,mm]=k.split("-"); return new Date(yy,mm-1).toLocaleString("default",{month:"short",year:"numeric"});
+  });
+  Plotly.newPlot("clubTrend",
+    [{x:labels,y:keys.map(k=>monthly[k]),type:"scatter",mode:"lines+markers",line:{width:3,color:p.us},marker:{size:6}}],
+    getLayout("Signups","Month"),
+    {displayModeBar:false,responsive:true});
+}
+
+/* -------- Static Top Clubs (overall, not filtered) -------- */
+function renderTopClubsStatic() {
+  const p = palette();
+  const rows = GLOBAL.filtered;
+  const clubsUS = {}, clubsCAN = {};
+  rows.forEach(r => {
+    const club = (r["club name"] || "").trim();
+    const promo = (r["promotion name"] || "").trim();
+    const reg = normRegion(r["region"]);
+    if (!club || !promo) return;
+    if (reg === "US") clubsUS[club] = clubsUS[club] || { count: 0, promo: promo };
+    if (reg === "CAN") clubsCAN[club] = clubsCAN[club] || { count: 0, promo: promo };
+    if (reg === "US") clubsUS[club].count++;
+    if (reg === "CAN") clubsCAN[club].count++;
+  });
+
+  const all = new Set([...Object.keys(clubsUS), ...Object.keys(clubsCAN)]);
+  const totals = {};
+  all.forEach(c => totals[c] = (clubsUS[c]?.count || 0) + (clubsCAN[c]?.count || 0));
+  const top = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([c]) => c);
+
+  // Combine club + promo for display
+  const displayNames = top.map(c => {
+    const promo = clubsUS[c]?.promo || clubsCAN[c]?.promo || "";
+    return promo ? `${c} (${promo})` : c;
+  });
+
+  Plotly.newPlot("topClubsChart",
+    [
+      {
+        name: "US",
+        x: top.map(c => clubsUS[c]?.count || 0),
+        y: displayNames,
+        type: "bar",
+        orientation: "h",
+        marker: { color: p.us },
+        hovertemplate: "%{y}<br>US Usage: %{x}<extra></extra>"
+      },
+      {
+        name: "CAN",
+        x: top.map(c => clubsCAN[c]?.count || 0),
+        y: displayNames,
+        type: "bar",
+        orientation: "h",
+        marker: { color: p.can },
+        hovertemplate: "%{y}<br>CAN Usage: %{x}<extra></extra>"
+      }
+    ],
+    {
+      ...getLayout("Usage", "Club (Promo Code)"),
+      margin: { t: 20, l: 300, b: 50, r: 20 },
+      barmode: "group",
+      xaxis: { title: "Usage" },
+      yaxis: { automargin: true }
+    },
+    { displayModeBar: false, responsive: true }
+  );
+}
+
+/* -------- Theme re-render -------- */
+function rerenderAll(){
+  // re-render using current filtered state
+  renderCurrent(GLOBAL.filtered);
+  renderClubInsights();
+  renderTopClubsStatic();
+}
 </script>
 </body>
 </html>
-
-
-
-
-
