@@ -6,6 +6,7 @@
 <title>Health &amp; Wellness Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <style>
 :root {
@@ -73,6 +74,7 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
   <div class="tabs">
     <button class="tab-button active" onclick="openTab('current')">Current Data</button>
     <button class="tab-button" onclick="openTab('clubInsights')">Club Insights</button>
+    <button class="tab-button" onclick="openTab('employerPaid')">Employer Paid</button>
     <button class="tab-button" onclick="openTab('active')">Active Partners</button>
     <button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
     <button class="tab-button" onclick="openTab('changelog')">Changelog</button>
@@ -101,6 +103,31 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
     <div class="card" style="margin-top:18px;">
       <div class="legend">Top 5 Promotions by Region (US vs CAN)</div>
       <div id="promoChart"></div>
+    </div>
+  </div>
+
+ <!-- EMPLOYER PAID -->
+  <div class="tab-content" id="employerPaid">
+    <div class="card">
+      <h2 style="margin:0 0 12px 0;">Employer Paid – KPIs</h2>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:10px 8px;">Company Name</th>
+            <th style="text-align:right;padding:10px 8px;">Total Members</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px 8px;">Pansophia</td>
+            <td id="kpiPansophia" style="text-align:right;padding:10px 8px;">—</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 8px;">ASAMA Coldwater Manufacturing</td>
+            <td id="kpiAsama" style="text-align:right;padding:10px 8px;">—</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -496,6 +523,105 @@ function rerenderAll(){
   renderCurrent(GLOBAL.filtered);
   renderClubInsights();
   renderTopClubsStatic();
+}
+
+/* -------- Tabs & Theme (patched for Employer Paid) -------- */
+function openTab(tab){
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(tab).classList.add("active");
+  document.querySelector(`button[onclick="openTab('${tab}')"]`).classList.add("active");
+
+  // ✅ Trigger Employer Paid KPI load when that tab is opened
+  if(tab === "employerPaid") {
+    console.log("📊 Employer Paid tab opened — loading KPIs...");
+    renderEmployerPaidKPIs();
+  }
+
+  requestAnimationFrame(resizeAllCharts);
+}
+
+/* ---- Employer Paid: Count by Group ---- */
+const EMPLOYER_PAID = [
+  {
+    company: "Pansophia",
+    groupKey: "Pansophia",
+    url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTKsFVL_lAR2kSk8EHhMlc8-q_Xy1eVJ5kYFXk1ZuQo6Ukpp-GnFNRR6o_DI7rVBXxGvhmCGeecgi1/pub?gid=1580598102&single=true&output=csv",
+    target: "kpiPansophia"
+  },
+  {
+    company: "ASAMA Coldwater Manufacturing",
+    groupKey: "ASAMABC",
+    url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSTKsFVL_lAR2kSk8EHhMlc8-q_Xy1eVJ5kYFXk1ZuQo6Ukpp-GnFNRR6o_DI7rVBXxGvhmCGeecgi1/pub?gid=1118993687&single=true&output=csv",
+    target: "kpiAsama"
+  }
+];
+
+function normalize(str) {
+  return (str || "").toString().trim().toLowerCase();
+}
+
+// find likely 'group' header
+function findGroupKey(headers) {
+  const normalized = headers.map(h => normalize(h));
+  const idx = normalized.findIndex(h =>
+    h === "group" ||
+    h === "groups" ||
+    h.includes("group")
+  );
+  return idx >= 0 ? headers[idx] : headers[0]; // fallback to first col
+}
+
+async function countGroupMatches(url, matchValue) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(url, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (res) => {
+        try {
+          const rows = res.data || [];
+          if (!rows.length) return resolve(0);
+
+          const headers = Object.keys(rows[0]);
+          const key = findGroupKey(headers);
+
+          console.log("📄 CSV loaded:", url);
+          console.log("Headers found:", headers);
+          console.log("Using column:", key);
+          console.log("First 10 values:", rows.slice(0, 10).map(r => r[key]));
+
+          // ✅ count partial matches now
+          const total = rows.filter(r => {
+            const val = (r[key] || "").toLowerCase();
+            const match = matchValue.toLowerCase();
+            return val.includes(match);
+          }).length;
+
+          console.log(`✅ Counted ${total} rows containing '${matchValue}'`);
+          resolve(total);
+        } catch (e) {
+          reject(e);
+        }
+      },
+      error: (e) => reject(e)
+    });
+  });
+}
+
+async function renderEmployerPaidKPIs() {
+  for (const ds of EMPLOYER_PAID) {
+    const el = document.getElementById(ds.target);
+    if (!el) continue;
+    el.textContent = "…";
+    try {
+      const total = await countGroupMatches(ds.url, ds.groupKey);
+      el.textContent = total.toLocaleString();
+    } catch (e) {
+      console.error(`Employer Paid Error for ${ds.company}:`, e);
+      el.textContent = "—";
+    }
+  }
 }
 </script>
 </body>
