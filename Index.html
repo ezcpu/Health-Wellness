@@ -61,7 +61,7 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
 
 @media(max-width:1200px){.grid-3{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr);} .grid-3,.grid-2{grid-template-columns:1fr;}}
-@media(max-width:520px){body{padding:16px;} h1{font-size:24px;} .kpi .val{font-size:20px}}  
+@media(max-width:520px){body{padding:16px;} h1{font-size:24px;} .kpi .val{font-size:20px}}
 </style>
 </head>
 <body>
@@ -89,11 +89,11 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
       <div class="kpi"><h3>Unique Promo Codes</h3><div class="val" id="kpiPromo">0</div></div>
     </div>
 
-<div class="grid-3">
-  <div class="card"><div class="legend">Region Split</div><div id="clubRegionDonut"></div></div>
-  <div class="card"><div class="legend">Promo Code Usage</div><div id="clubUsage"></div></div>
-  <div class="card"><div class="legend">Monthly Trend</div><div id="clubTrend"></div></div>
-</div>
+    <div class="grid-3">
+      <div class="card"><div class="legend">Region Breakdown — Total Members</div><div id="regionTotalChart"></div></div>
+      <div class="card"><div class="legend">Region Breakdown — Black Card</div><div id="regionBCChart"></div></div>
+      <div class="card"><div class="legend">Region Breakdown — 10NR</div><div id="region10NRChart"></div></div>
+    </div>
 
     <div class="grid-2" style="margin-top:18px;">
       <div class="card"><div class="legend">Monthly Impact — US</div><div id="impactUS"></div></div>
@@ -109,7 +109,7 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
  <!-- EMPLOYER PAID -->
   <div class="tab-content" id="employerPaid">
     <div class="card">
-      <h2 style="margin:0 0 12px 0;">Employer Paid</h2>
+      <h2 style="margin:0 0 12px 0;">Employer Paid – KPIs</h2>
       <table style="width:100%;border-collapse:collapse;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);">
@@ -184,7 +184,6 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
       <h2 style="margin:0 0 8px 0;">Changelog</h2>
       <ul>
         <li>Data only to include the following; "CLEMENSBC","CLEMENSWC","MTPCORPWC","CORPBC","CORP15","CORPFMBC","CORPFM15","CORP10","PFCORP10","PFCORPBC"</li>
-          <li>Added "Employer Paid" Tab Count of total Members for each of our Employer Paid Partnerships</li>
         <li>Added "Club Insights" Tab to filter per club promo usage</li>
         <li>Further US/CA Breakdown of usage</li>
        
@@ -303,8 +302,8 @@ async function loadData(){
     setupClubInsights(GLOBAL.filtered);
     renderTopClubsStatic();
 
-status.textContent=`✅ Data loaded: ${GLOBAL.filtered.length} matching rows`;
-status.style.color="var(--accent)";
+    status.textContent=`✅ Data loaded: ${GLOBAL.filtered.length} matching rows`;
+    status.style.color="var(--accent)";
   }catch(e){
     console.error(e);
     status.textContent="⚠️ Could not load data.";
@@ -627,10 +626,4 @@ async function renderEmployerPaidKPIs() {
 </script>
 </body>
 </html>
-
-
-
-
-
-
 
