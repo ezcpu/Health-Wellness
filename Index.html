@@ -302,7 +302,20 @@ async function loadData(){
     setupClubInsights(GLOBAL.filtered);
     renderTopClubsStatic();
 
-    status.textContent=`✅ Data loaded: ${GLOBAL.filtered.length} matching rows`;
+    // find most recent Created Date in filtered data
+const latest = new Date(Math.max(...GLOBAL.filtered
+  .map(r => r.dateParsed)
+  .filter(d => !isNaN(d))
+));
+
+// format it nicely
+const latestStr = latest.toLocaleDateString("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric"
+});
+
+status.textContent = `✅ Data loaded: ${GLOBAL.filtered.length} matching rows — Most recent: ${latestStr}`;
     status.style.color="var(--accent)";
   }catch(e){
     console.error(e);
