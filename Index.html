@@ -303,26 +303,8 @@ async function loadData(){
     setupClubInsights(GLOBAL.filtered);
     renderTopClubsStatic();
 
-// find the most recent created date
-const validDates = GLOBAL.filtered
-  .map(r => r.dateParsed)
-  .filter(d => !isNaN(d))
-  .sort((a, b) => b - a);
-
-let lastUpdated = "N/A";
-if (validDates.length > 0) {
-  const latest = validDates[0];
-  lastUpdated = latest.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
-}
-
-// show row count + last update date
-status.textContent = `✅ Data loaded: ${GLOBAL.filtered.length.toLocaleString()} matching rows (Last updated: ${lastUpdated})`;
-status.style.color = "var(--accent)";
-    
+status.textContent=`✅ Data loaded: ${GLOBAL.filtered.length} matching rows`;
+status.style.color="var(--accent)";
   }catch(e){
     console.error(e);
     status.textContent="⚠️ Could not load data.";
@@ -645,6 +627,7 @@ async function renderEmployerPaidKPIs() {
 </script>
 </body>
 </html>
+
 
 
 
