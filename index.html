@@ -72,7 +72,6 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
     <button class="tab-button" onclick="openTab('clubInsights')">Club Insights</button>
     <button class="tab-button" onclick="openTab('employerPaid')">Employer Paid</button>
     <button class="tab-button" onclick="openTab('active')">Active Partners</button>
-    <button class="tab-button" onclick="openTab('pending')">Pending Inquiries</button>
     <button class="tab-button" onclick="openTab('changelog')">Changelog</button>
   </div>
 
@@ -158,20 +157,13 @@ iframe{width:100%;height:80vh;border:none;border-radius:12px;background:var(--ca
     </div>
   </div>
 
-  <!-- PENDING (unchanged iframe) -->
-  <div class="tab-content" id="pending">
-    <div class="card"><div class="legend">Pending Inquiries</div>
-      <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSkf0CtRTvB6WLSq7NrnCJ13Yy7TKFehNLU4p_IMj7zz_eTJAxw6-fw-27M9UWNDurEWNOZy3vM6l16/pubhtml?gid=279243253&single=true"></iframe>
-    </div>
-  </div>
-
   <!-- CHANGELOG -->
   <div class="tab-content" id="changelog">
     <div class="card">
       <h2 style="margin:0 0 8px 0;">Changelog</h2>
       <ul>
         <li>Active Partners: list + region chart from sheet Region (East / West / Canada)</li>
-        <li>Fixed CAN monthly series + tab handling</li>
+        <li>Removed Pending Inquries</li>
       </ul>
     </div>
   </div>
@@ -660,4 +652,5 @@ window.addEventListener("resize",()=>{
 </script>
 </body>
 </html>
+
 
