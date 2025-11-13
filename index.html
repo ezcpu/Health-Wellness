@@ -232,7 +232,7 @@ async function loadData(){
     const latest=new Date(Math.max(...ST.filtered.map(r=>r.dateParsed).filter(d=>!isNaN(d))));
     const ls=latest.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
     document.getElementById("lastUpdated").style.display="flex";
-    document.getElementById("lastUpdatedText").textContent=`Last data: ${ls}`;
+    document.getElementById("lastUpdatedText").textContent=`Data through: ${ls}`;
     setStatus(`${ST.filtered.length} records loaded`,"success");
   }catch(e){console.error(e);setStatus("Failed to load data","error");}
 }
@@ -404,5 +404,6 @@ document.addEventListener("DOMContentLoaded",init);
 </script>
 </body>
 </html>
+
 
 
