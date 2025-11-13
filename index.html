@@ -244,9 +244,9 @@ function renderCurrent(data){
   document.getElementById("kpiPromo").textContent=new Set(data.map(r=>(r["promotion name"]||"").trim()).filter(Boolean)).size;
   const tot={US:0,CAN:0},bc={US:0,CAN:0},nr={US:0,CAN:0};
   data.forEach(r=>{const reg=normReg(r["region"]);if(!(reg in tot))return;tot[reg]++;const m=(r["membership type"]||"").toUpperCase();if(m.includes("BLACK"))bc[reg]++;if(m.includes("10NR"))nr[reg]++;});
-  Plotly.newPlot("regionTotalChart",[{x:Object.keys(tot),y:Object.values(tot),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(tot),textposition:"outside",hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
-  Plotly.newPlot("regionBCChart",[{x:Object.keys(bc),y:Object.values(bc),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(bc),textposition:"outside",hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
-  Plotly.newPlot("region10NRChart",[{x:Object.keys(nr),y:Object.values(nr),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(nr),textposition:"outside",hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("regionTotalChart",[{x:Object.keys(tot),y:Object.values(tot),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(tot),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("regionBCChart",[{x:Object.keys(bc),y:Object.values(bc),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(bc),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("region10NRChart",[{x:Object.keys(nr),y:Object.values(nr),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(nr),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
   const mUS={},mCAN={};
   data.forEach(r=>{const d=r.dateParsed;if(isNaN(d))return;const k=monthKey(d);const reg=normReg(r["region"]);if(reg==="US")mUS[k]=(mUS[k]||0)+1;if(reg==="CAN")mCAN[k]=(mCAN[k]||0)+1;});
   const kUS=Object.keys(mUS).sort(),kCAN=Object.keys(mCAN).sort();
@@ -358,7 +358,7 @@ function renderPartners(){
     const rCnts=partners.reduce((acc,p)=>{acc[p.region]=(acc[p.region]||0)+1;return acc;},{});
     const regs=Object.entries(rCnts).sort((a,b)=>b[1]-a[1]);
     const p=pal();
-    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),textposition:"outside",hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
+    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),text:regs.map(([,cnt])=>cnt),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
     statusEl.textContent=`${partners.length} partners`;
     ST.partnersLoaded=true;
     requestAnimationFrame(resizeCharts);
@@ -404,6 +404,7 @@ document.addEventListener("DOMContentLoaded",init);
 </script>
 </body>
 </html>
+
 
 
 
