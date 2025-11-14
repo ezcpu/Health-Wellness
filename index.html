@@ -72,6 +72,7 @@ select:focus{outline:2px solid var(--us);outline-offset:2px;border-color:var(--u
 .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
 .badge.us{background:rgba(37,99,235,.15);color:var(--us);}
 .badge.can{background:rgba(147,51,234,.15);color:var(--can);}
+.badge.payment{background:rgba(16,185,129,.15);color:var(--accent);}
 table{width:100%;border-collapse:collapse;}
 thead tr{border-bottom:2px solid var(--border);}
 th{text-align:left;padding:12px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:var(--muted);}
@@ -162,16 +163,18 @@ tbody tr:hover{background:var(--bg-secondary);}
 <h3 class="section-title">Active Partnership Network</h3>
 <div id="activeStatus" class="status-item"><span class="status-indicator"></span><span>Loading...</span></div>
 </div>
-<div class="grid-2">
-<div><div class="legend" style="margin-bottom:16px;">Partner Directory</div><ul id="partnersList" class="partners-list"></ul></div>
-<div><div class="card"><div class="legend">Geographic Distribution</div><div id="partnersByRegion"></div></div></div>
+<div class="grid-2" style="margin-bottom:24px;">
+<div class="card"><div class="legend">Geographic Distribution</div><div id="partnersByRegion"></div></div>
+<div class="card"><div class="legend">Payment Arrangement Types</div><div id="paymentByRegion"></div></div>
 </div>
+<div><div class="legend" style="margin-bottom:16px;">Partner Directory</div><ul id="partnersList" class="partners-list" style="max-height:600px;overflow-y:auto;"></ul></div>
 </div>
 </div>
 <div class="tab-content" id="changelog" role="tabpanel">
 <div class="card">
 <h2 class="section-title" style="margin-bottom:20px;">Recent Updates</h2>
 <ul style="line-height:2;color:var(--muted);">
+<li><strong>Active Partners:</strong> Added payment arrangement information and regional payment breakdown</li>
 <li><strong>Active Partners:</strong> Added partner list with regional breakdown (East / West / Canada)</li>
 <li><strong>UI Improvements:</strong> Enhanced visuals and responsive design</li>
 <li><strong>Performance:</strong> Optimized chart rendering and data loading</li>
@@ -349,16 +352,59 @@ function renderPartners(){
       const name=r["company name"]||r["company"]||"Unknown";
       let region=r["region"]||"Unknown";
       region=region.replace(/east canada|eastern canada/i,"East").replace(/west canada|western canada/i,"West").replace(/canada/i,"Canada");
-      const promo=r["promotion type"]||"";
-      return{name,region,promo};
+      const promo=r["promotion type"]||r["promotion"]||"";
+      
+      // Try all possible column names for payment arrangement
+      const payment=r["payment arrangement"]||r["payment arrangements"]||r["payment"]||r["payment type"]||
+                    r["paymentarrangement"]||r["paymentarrangements"]||r["paymenttype"]||
+                    r["employee reimbursement"]||r["company paid"]||r["employee paid"]||"";
+      
+      return{name,region,promo,payment};
     });
     if(!partners.length){statusEl.textContent="No partners found";return;}
     partners.sort((a,b)=>a.name.localeCompare(b.name));
-    listEl.innerHTML=partners.map(p=>`<li><span class="name">${p.name}</span><span class="meta"><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span>${p.promo?`<span>${p.promo}</span>`:""}</span></li>`).join("");
+    listEl.innerHTML=partners.map(p=>`<li><span class="name">${p.name}</span><span class="meta"><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span>${p.promo?`<span>${p.promo}</span>`:""}${p.payment?`<span class="badge payment">${p.payment}</span>`:""}</span></li>`).join("");
     const rCnts=partners.reduce((acc,p)=>{acc[p.region]=(acc[p.region]||0)+1;return acc;},{});
     const regs=Object.entries(rCnts).sort((a,b)=>b[1]-a[1]);
     const p=pal();
-    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),text:regs.map(([,cnt])=>cnt),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
+    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
+    
+    // New chart: Payment Arrangement Types (simple bar chart)
+    const paymentCounts={};
+    partners.forEach(partner=>{
+      if(partner.payment){
+        paymentCounts[partner.payment]=(paymentCounts[partner.payment]||0)+1;
+      }
+    });
+    
+    const paymentEntries=Object.entries(paymentCounts).sort((a,b)=>b[1]-a[1]);
+    
+    if(paymentEntries.length>0){
+      // Assign specific colors for each payment type
+      const getPaymentColor=(type)=>{
+        const t=type.toLowerCase();
+        if(t.includes('employee paid'))return'#2563eb'; // Blue for Employee Paid
+        if(t.includes('employee reimbursement'))return'#f59e0b'; // Orange for Employee Reimbursement
+        if(t.includes('company paid'))return'#10b981'; // Green for Company Paid
+        return p.accent; // Default color for others
+      };
+      
+      const colors=paymentEntries.map(([type])=>getPaymentColor(type));
+      
+      Plotly.newPlot("paymentByRegion",[{
+        x:paymentEntries.map(([type])=>type),
+        y:paymentEntries.map(([,cnt])=>cnt),
+        type:"bar",
+        marker:{color:colors},
+        text:paymentEntries.map(([,cnt])=>cnt),
+        textposition:"auto",
+        textfont:{color:"white",size:14,weight:"bold"},
+        hovertemplate:"%{x}: %{y} partners<extra></extra>"
+      }],{...lay("Partners","Payment Type"),height:300,margin:{t:10,l:50,r:10,b:80},xaxis:{...lay().xaxis,tickangle:-45}},pcfg);
+    }else{
+      document.getElementById("paymentByRegion").innerHTML='<div class="empty-state"><div class="empty-state-icon">💳</div><p>No payment arrangement data</p></div>';
+    }
+    
     statusEl.textContent=`${partners.length} partners`;
     ST.partnersLoaded=true;
     requestAnimationFrame(resizeCharts);
@@ -385,7 +431,7 @@ function toggleTheme(){
   requestAnimationFrame(resizeCharts);
 }
 function resizeCharts(){
-  const ids=["regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart","clubRegionDonut","clubUsage","clubTrend","topClubsChart","partnersByRegion"];
+  const ids=["regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart","clubRegionDonut","clubUsage","clubTrend","topClubsChart","partnersByRegion","paymentByRegion"];
   ids.forEach(id=>{const el=document.getElementById(id);if(el&&el.data)Plotly.Plots.resize(el);});
 }
 function rerender(){
@@ -404,7 +450,3 @@ document.addEventListener("DOMContentLoaded",init);
 </script>
 </body>
 </html>
-
-
-
-
