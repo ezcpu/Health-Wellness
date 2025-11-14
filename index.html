@@ -73,6 +73,9 @@ select:focus{outline:2px solid var(--us);outline-offset:2px;border-color:var(--u
 .badge.us{background:rgba(37,99,235,.15);color:var(--us);}
 .badge.can{background:rgba(147,51,234,.15);color:var(--can);}
 .badge.payment{background:rgba(16,185,129,.15);color:var(--accent);}
+.badge.payment-employee-paid{background:rgba(37,99,235,.15);color:#2563eb;}
+.badge.payment-employee-reimb{background:rgba(245,158,11,.15);color:#f59e0b;}
+.badge.payment-company-paid{background:rgba(16,185,129,.15);color:#10b981;}
 table{width:100%;border-collapse:collapse;}
 thead tr{border-bottom:2px solid var(--border);}
 th{text-align:left;padding:12px;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:var(--muted);}
@@ -214,29 +217,39 @@ const pcfg={displayModeBar:false,responsive:true};
 async function loadData(){
   try{
     setStatus("Loading data...","info");
-    const r=await fetch(CFG.CSV);
-    if(!r.ok)throw new Error("Failed to fetch");
-    const txt=await r.text();
-    const rows=txt.trim().split("\n").map(r=>r.split(","));
-    const hdr=rows[0].map(h=>h.trim().toLowerCase());
-    const data=rows.slice(1).map(row=>{
-      const o={};hdr.forEach((h,i)=>o[h]=row[i]);
-      const ds=(o["created date"]||"").trim();
-      o.dateParsed=new Date(ds.includes("/")?ds.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/,"$3-$1-$2"):ds);
-      return o;
-    });
-    ST.data=data;
-    ST.filtered=data.filter(r=>hasCode(r["promotion name"]));
-    ST.months=[...new Set(ST.filtered.map(r=>{const d=r.dateParsed;return isNaN(d)?null:monthKey(d);}).filter(Boolean))].sort();
-    ST.loaded=true;
-    renderCurrent(ST.filtered);
-    setupClub(ST.filtered);
-    renderTopClubs();
-    const latest=new Date(Math.max(...ST.filtered.map(r=>r.dateParsed).filter(d=>!isNaN(d))));
-    const ls=latest.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
-    document.getElementById("lastUpdated").style.display="flex";
-    document.getElementById("lastUpdatedText").textContent=`Data through: ${ls}`;
-    setStatus(`${ST.filtered.length} records loaded`,"success");
+    Papa.parse(CFG.CSV,{download:true,header:true,skipEmptyLines:true,complete:result=>{
+      try{
+        const data=result.data||[];
+        // Clean and process the data
+        const processed=data.map(row=>{
+          const o={};
+          for(const k in row){
+            o[k.trim().toLowerCase()]=row[k];
+          }
+          const ds=(o["created date"]||"").trim();
+          o.dateParsed=new Date(ds.includes("/")?ds.replace(/(\d{1,2})\/(\d{1,2})\/(\d{4})/,"$3-$1-$2"):ds);
+          return o;
+        });
+        ST.data=processed;
+        ST.filtered=processed.filter(r=>hasCode(r["promotion name"]));
+        ST.months=[...new Set(ST.filtered.map(r=>{const d=r.dateParsed;return isNaN(d)?null:monthKey(d);}).filter(Boolean))].sort();
+        ST.loaded=true;
+        renderCurrent(ST.filtered);
+        setupClub(ST.filtered);
+        renderTopClubs();
+        const latest=new Date(Math.max(...ST.filtered.map(r=>r.dateParsed).filter(d=>!isNaN(d))));
+        const ls=latest.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"});
+        document.getElementById("lastUpdated").style.display="flex";
+        document.getElementById("lastUpdatedText").textContent=`Data through: ${ls}`;
+        setStatus(`${ST.filtered.length} records loaded`,"success");
+      }catch(e){
+        console.error(e);
+        setStatus("Failed to process data","error");
+      }
+    },error:e=>{
+      console.error(e);
+      setStatus("Failed to load data","error");
+    }});
   }catch(e){console.error(e);setStatus("Failed to load data","error");}
 }
 function renderCurrent(data){
@@ -247,9 +260,9 @@ function renderCurrent(data){
   document.getElementById("kpiPromo").textContent=new Set(data.map(r=>(r["promotion name"]||"").trim()).filter(Boolean)).size;
   const tot={US:0,CAN:0},bc={US:0,CAN:0},nr={US:0,CAN:0};
   data.forEach(r=>{const reg=normReg(r["region"]);if(!(reg in tot))return;tot[reg]++;const m=(r["membership type"]||"").toUpperCase();if(m.includes("BLACK"))bc[reg]++;if(m.includes("10NR"))nr[reg]++;});
-  Plotly.newPlot("regionTotalChart",[{x:Object.keys(tot),y:Object.values(tot),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(tot),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
-  Plotly.newPlot("regionBCChart",[{x:Object.keys(bc),y:Object.values(bc),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(bc),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
-  Plotly.newPlot("region10NRChart",[{x:Object.keys(nr),y:Object.values(nr),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(nr),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("regionTotalChart",[{x:Object.keys(tot),y:Object.values(tot),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(tot),textposition:"auto",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("regionBCChart",[{x:Object.keys(bc),y:Object.values(bc),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(bc),textposition:"auto",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
+  Plotly.newPlot("region10NRChart",[{x:Object.keys(nr),y:Object.values(nr),type:"bar",marker:{color:[p.us,p.can]},text:Object.values(nr),textposition:"auto",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Members","Region"),height:300},pcfg);
   const mUS={},mCAN={};
   data.forEach(r=>{const d=r.dateParsed;if(isNaN(d))return;const k=monthKey(d);const reg=normReg(r["region"]);if(reg==="US")mUS[k]=(mUS[k]||0)+1;if(reg==="CAN")mCAN[k]=(mCAN[k]||0)+1;});
   const kUS=Object.keys(mUS).sort(),kCAN=Object.keys(mCAN).sort();
@@ -363,11 +376,21 @@ function renderPartners(){
     });
     if(!partners.length){statusEl.textContent="No partners found";return;}
     partners.sort((a,b)=>a.name.localeCompare(b.name));
-    listEl.innerHTML=partners.map(p=>`<li><span class="name">${p.name}</span><span class="meta"><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span>${p.promo?`<span>${p.promo}</span>`:""}${p.payment?`<span class="badge payment">${p.payment}</span>`:""}</span></li>`).join("");
+    
+    // Color coordination helper function
+    const getPaymentBadgeClass=(payment)=>{
+      const p=payment.toLowerCase();
+      if(p.includes('employee paid'))return'badge payment-employee-paid';
+      if(p.includes('employee reimbursement'))return'badge payment-employee-reimb';
+      if(p.includes('company paid'))return'badge payment-company-paid';
+      return'badge payment';
+    };
+    
+    listEl.innerHTML=partners.map(p=>`<li><span class="name">${p.name}</span><span class="meta"><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span>${p.promo?`<span>${p.promo}</span>`:""}${p.payment?`<span class="${getPaymentBadgeClass(p.payment)}">${p.payment}</span>`:""}</span></li>`).join("");
     const rCnts=partners.reduce((acc,p)=>{acc[p.region]=(acc[p.region]||0)+1;return acc;},{});
     const regs=Object.entries(rCnts).sort((a,b)=>b[1]-a[1]);
     const p=pal();
-    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),textposition:"inside",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
+    Plotly.newPlot("partnersByRegion",[{x:regs.map(([reg])=>reg),y:regs.map(([,cnt])=>cnt),type:"bar",marker:{color:regs.map(([reg])=>reg==="Canada"?p.can:reg==="East"?p.us:p.accent)},text:regs.map(([,cnt])=>cnt),textposition:"auto",textfont:{color:"white",size:14,weight:"bold"},hovertemplate:"%{x}: %{y}<extra></extra>"}],{...lay("Partners","Region"),height:300,margin:{t:10,l:50,r:10,b:50}},pcfg);
     
     // New chart: Payment Arrangement Types (simple bar chart)
     const paymentCounts={};
