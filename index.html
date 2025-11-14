@@ -25,7 +25,7 @@ body.dark {
   --shadow-lg:0 4px 6px rgba(0,0,0,.4),0 12px 28px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box;transition:background-color .25s ease,color .25s ease,border-color .25s ease;}
-html,body{height:100%;margin:0;padding:0;}
+html,body{height:100%;margin:0;padding:0;overflow-x:hidden;}
 body{padding:24px;font-family:'Plus Jakarta Sans',Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;}
 h1{font-size:32px;margin:0;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,var(--us),var(--can));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
@@ -65,10 +65,10 @@ select:focus{outline:2px solid var(--us);outline-offset:2px;border-color:var(--u
 .theme-toggle:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg);border-color:var(--us);}
 .theme-toggle:focus{outline:2px solid var(--us);outline-offset:2px;}
 .partners-list{list-style:none;margin:0;padding:0;}
-.partners-list li{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 16px;margin-bottom:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;transition:all .2s ease;}
-.partners-list li:hover{transform:translateX(4px);border-color:var(--us);box-shadow:var(--shadow);}
-.partners-list .name{font-weight:700;color:var(--text);}
-.partners-list .meta{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+.partners-list li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:16px;margin-bottom:10px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:12px;transition:all .2s ease;min-width:0;}
+.partners-list li:hover{border-color:var(--us);box-shadow:var(--shadow);}
+.partners-list .name{font-weight:700;color:var(--text);font-size:15px;word-wrap:break-word;overflow-wrap:break-word;min-width:0;}
+.partners-list .meta{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
 .badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
 .badge.us{background:rgba(37,99,235,.15);color:var(--us);}
 .badge.can{background:rgba(147,51,234,.15);color:var(--can);}
@@ -372,7 +372,10 @@ function renderPartners(){
                     r["paymentarrangement"]||r["paymentarrangements"]||r["paymenttype"]||
                     r["employee reimbursement"]||r["company paid"]||r["employee paid"]||"";
       
-      return{name,region,promo,payment};
+      // Get supporting documents link
+      const docsLink=r["supporting documents (urls)"]||r["supporting documents"]||r["supporting document"]||r["documents"]||r["document link"]||r["link"]||"";
+      
+      return{name,region,promo,payment,docsLink};
     });
     if(!partners.length){statusEl.textContent="No partners found";return;}
     partners.sort((a,b)=>a.name.localeCompare(b.name));
@@ -386,7 +389,7 @@ function renderPartners(){
       return'badge payment';
     };
     
-    listEl.innerHTML=partners.map(p=>`<li><span class="name">${p.name}</span><span class="meta"><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span>${p.promo?`<span>${p.promo}</span>`:""}${p.payment?`<span class="${getPaymentBadgeClass(p.payment)}">${p.payment}</span>`:""}</span></li>`).join("");
+    listEl.innerHTML=partners.map(p=>`<li><span class="badge ${p.region==="Canada"?"can":"us"}">${p.region}</span><span class="name">${p.name}</span><span class="meta">${p.payment?`<span class="${getPaymentBadgeClass(p.payment)}">${p.payment}</span>`:""}${p.docsLink?`<a href="${p.docsLink}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:none;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">📄 Flyer</a>`:""}</span></li>`).join("");
     const rCnts=partners.reduce((acc,p)=>{acc[p.region]=(acc[p.region]||0)+1;return acc;},{});
     const regs=Object.entries(rCnts).sort((a,b)=>b[1]-a[1]);
     const p=pal();
@@ -420,10 +423,10 @@ function renderPartners(){
         type:"bar",
         marker:{color:colors},
         text:paymentEntries.map(([,cnt])=>cnt),
-        textposition:"auto",
-        textfont:{color:"white",size:14,weight:"bold"},
+        textposition:"outside",
+        textfont:{color:p.font,size:14,weight:"bold"},
         hovertemplate:"%{x}: %{y} partners<extra></extra>"
-      }],{...lay("Partners","Payment Type"),height:300,margin:{t:10,l:50,r:10,b:80},xaxis:{...lay().xaxis,tickangle:-45}},pcfg);
+      }],{...lay("Partners","Payment Type"),height:300,margin:{t:30,l:50,r:10,b:80},xaxis:{...lay().xaxis,tickangle:-45}},pcfg);
     }else{
       document.getElementById("paymentByRegion").innerHTML='<div class="empty-state"><div class="empty-state-icon">💳</div><p>No payment arrangement data</p></div>';
     }
