@@ -239,9 +239,9 @@ function pal(){
 }
 function lay(y,x){
   const p=pal();
-  return{margin:{t:20,b:50,l:60,r:20},paper_bgcolor:p.paper,plot_bgcolor:p.plot,font:{color:p.font,family:"'Plus Jakarta Sans',sans-serif",size:12},xaxis:{title:x,gridcolor:p.grid,zerolinecolor:p.grid,automargin:true},yaxis:{title:y,gridcolor:p.grid,zerolinecolor:p.grid,automargin:true},legend:{orientation:"h",y:1.12,x:0,bgcolor:"rgba(0,0,0,0)"},hovermode:"closest"};
+  return{margin:{t:20,b:50,l:60,r:20},paper_bgcolor:p.paper,plot_bgcolor:p.plot,font:{color:p.font,family:"'Plus Jakarta Sans',sans-serif",size:12},xaxis:{title:x,gridcolor:p.grid,zerolinecolor:p.grid,automargin:true},yaxis:{title:y,gridcolor:p.grid,zerolinecolor:p.grid,automargin:true},legend:{orientation:"h",y:1.12,x:0,bgcolor:"rgba(0,0,0,0)"},hovermode:"closest",autosize:true};
 }
-const pcfg={displayModeBar:false,responsive:true};
+const pcfg={displayModeBar:false,responsive:true,autosizable:true};
 async function loadData(){
   try{
     setStatus("Loading data...","info");
@@ -451,10 +451,10 @@ function renderPartners(){
         type:"bar",
         marker:{color:colors},
         text:paymentEntries.map(([,cnt])=>cnt),
-        textposition:"outside",
-        textfont:{color:p.font,size:14,weight:"bold"},
+        textposition:"inside",
+        textfont:{color:"white",size:14,weight:"bold"},
         hovertemplate:"%{x}: %{y} partners<extra></extra>"
-      }],{...lay("Partners","Payment Type"),height:300,margin:{t:30,l:50,r:10,b:80},xaxis:{...lay().xaxis,tickangle:-45}},pcfg);
+      }],{...lay("Partners","Payment Type"),height:300,margin:{t:10,l:50,r:10,b:100}},pcfg);
     }else{
       document.getElementById("paymentByRegion").innerHTML='<div class="empty-state"><div class="empty-state-icon">💳</div><p>No payment arrangement data</p></div>';
     }
@@ -486,19 +486,41 @@ function toggleTheme(){
 }
 function resizeCharts(){
   const ids=["regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart","clubRegionDonut","clubUsage","clubTrend","topClubsChart","partnersByRegion","paymentByRegion"];
-  ids.forEach(id=>{const el=document.getElementById(id);if(el&&el.data)Plotly.Plots.resize(el);});
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.data){
+      try{
+        Plotly.Plots.resize(el);
+      }catch(e){
+        console.warn(`Failed to resize chart ${id}:`,e);
+      }
+    }
+  });
 }
 function rerender(){
   if(!ST.loaded)return;
   renderCurrent(ST.filtered);
   renderClub();
   renderTopClubs();
+  // Resize charts after re-rendering
+  setTimeout(resizeCharts,100);
 }
 function init(){
   if(localStorage.getItem("theme")==="dark"){document.body.classList.add("dark");document.getElementById("themeToggle").textContent="☀️ Light Mode";}
   loadData();
   document.getElementById("themeToggle").onclick=toggleTheme;
-  window.addEventListener("resize",()=>{clearTimeout(window.__rsz);window.__rsz=setTimeout(resizeCharts,150);});
+  
+  // Better resize handling
+  let resizeTimer;
+  window.addEventListener("resize",()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{
+      resizeCharts();
+    },100);
+  });
+  
+  // Also resize on window load to ensure proper initial sizing
+  window.addEventListener("load",resizeCharts);
 }
 document.addEventListener("DOMContentLoaded",init);
 </script>
