@@ -451,10 +451,11 @@ function renderPartners(){
         type:"bar",
         marker:{color:colors},
         text:paymentEntries.map(([,cnt])=>cnt),
-        textposition:"inside",
-        textfont:{color:"white",size:14,weight:"bold"},
-        hovertemplate:"%{x}: %{y} partners<extra></extra>"
-      }],{...lay("Partners","Payment Type"),height:300,margin:{t:10,l:50,r:10,b:100}},pcfg);
+        textposition:"outside",
+        textfont:{color:p.font,size:14,weight:"bold"},
+        hovertemplate:"%{x}: %{y} partners<extra></extra>",
+        cliponaxis:false
+      }],{...lay("Partners","Payment Type"),height:320,margin:{t:40,l:50,r:10,b:100},yaxis:{...lay().yaxis,rangemode:"tozero"}},pcfg);
     }else{
       document.getElementById("paymentByRegion").innerHTML='<div class="empty-state"><div class="empty-state-icon">💳</div><p>No payment arrangement data</p></div>';
     }
@@ -481,8 +482,28 @@ function toggleTheme(){
   const isDark=document.body.classList.contains("dark");
   localStorage.setItem("theme",isDark?"dark":"light");
   document.getElementById("themeToggle").textContent=isDark?"☀️ Light Mode":"🌙 Dark Mode";
-  rerender();
+  updateChartThemes();
   requestAnimationFrame(resizeCharts);
+}
+
+function updateChartThemes(){
+  const p = pal();
+  const ids = [
+    "regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart",
+    "clubRegionDonut","clubUsage","clubTrend","topClubsChart","partnersByRegion","paymentByRegion"
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.data) {
+      Plotly.relayout(el, {
+        paper_bgcolor: p.paper,
+        plot_bgcolor: p.plot,
+        font: { color: p.font, family: "'Plus Jakarta Sans',sans-serif", size: 12 },
+        xaxis: { gridcolor: p.grid, zerolinecolor: p.grid },
+        yaxis: { gridcolor: p.grid, zerolinecolor: p.grid }
+      });
+    }
+  });
 }
 function resizeCharts(){
   const ids=["regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart","clubRegionDonut","clubUsage","clubTrend","topClubsChart","partnersByRegion","paymentByRegion"];
@@ -499,10 +520,36 @@ function resizeCharts(){
 }
 function rerender(){
   if(!ST.loaded)return;
-  renderCurrent(ST.filtered);
-  renderClub();
-  renderTopClubs();
-  // Resize charts after re-rendering
+  // Only clear and re-render charts for the active tab
+  const activeTab = document.querySelector('.tab-content.active');
+  if (!activeTab) return;
+
+  // Overview tab
+  if (activeTab.id === "current") {
+    ["regionTotalChart","regionBCChart","region10NRChart","impactUS","impactCAN","promoChart"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML = "";
+    });
+    renderCurrent(ST.filtered);
+  }
+  // Club Insights tab
+  else if (activeTab.id === "clubInsights") {
+    ["clubRegionDonut","clubUsage","clubTrend","topClubsChart"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML = "";
+    });
+    renderClub();
+    renderTopClubs();
+  }
+  // Active Partners tab
+  else if (activeTab.id === "active") {
+    ["partnersByRegion","paymentByRegion"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.innerHTML = "";
+    });
+    ST.partnersLoaded = false; // Force reload for theme
+    renderPartners();
+  }
   setTimeout(resizeCharts,100);
 }
 function init(){
